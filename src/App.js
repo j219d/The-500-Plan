@@ -101,12 +101,7 @@ function App() {
 
   const [search, setSearch] = useState("");
   const [foodList, setFoodList] = useState([]);
-
-  const [customName, setCustomName] = useState("");
-  const [customCal, setCustomCal] = useState("");
-  const [customProt, setCustomProt] = useState("");
-
-  const [justAdded, setJustAdded] = useState(false);
+  const [justAddedName, setJustAddedName] = useState("");
 
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
@@ -158,21 +153,10 @@ function App() {
     const cals = parseFloat(kcal.trim());
     const pro = parseFloat(prot.trim());
     setFoodLog([...foodLog, { name: namePart, cal: cals, prot: pro }]);
+    setJustAddedName(namePart);
     setSearch("");
     setFoodList([]);
-    showFlash();
-  };
-
-  const addCustomFood = () => {
-    const cals = parseFloat(customCal);
-    const pro = parseFloat(customProt);
-    if (!isNaN(cals) && !isNaN(pro) && customName) {
-      setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
-      setCustomName("");
-      setCustomCal("");
-      setCustomProt("");
-      showFlash();
-    }
+    setTimeout(() => setJustAddedName(""), 1000);
   };
 
   const removeFood = (indexToRemove) => {
@@ -189,11 +173,6 @@ function App() {
       localStorage.setItem("weightLog", JSON.stringify(updated));
       setNewWeight("");
     }
-  };
-
-  const showFlash = () => {
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 800);
   };
 
   const recentWeights = weightLog.slice(-14);
@@ -264,12 +243,27 @@ function App() {
         <>
           <h3>Food Search</h3>
           <input placeholder="Search food..." value={search} onChange={e => setSearch(e.target.value)} />
-          <ul>{foodList.map((f, i) => <li key={i} onClick={() => handlePresetSelect(f)}>{f}</li>)}</ul>
-          <h4>Custom</h4>
-          <input value={customName} onChange={e => setCustomName(e.target.value)} placeholder="Food name" />
-          <input value={customCal} onChange={e => setCustomCal(e.target.value)} placeholder="Calories" />
-          <input value={customProt} onChange={e => setCustomProt(e.target.value)} placeholder="Protein" />
-          <button onClick={addCustomFood}>Add Food</button>
+          {foodList.map((f, idx) => (
+            <button
+              key={idx}
+              onClick={() => handlePresetSelect(f)}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: 10,
+                marginBottom: 6,
+                backgroundColor: justAddedName && f.includes(justAddedName) ? "#d4edda" : "#f0f0f0",
+                border: "1px solid #ccc",
+                borderRadius: 6,
+                cursor: "pointer",
+                textAlign: "left"
+              }}
+            >
+              {f}
+            </button>
+          ))}
+
+          <h4>Logged Today</h4>
           <ul>{foodLog.map((f, i) => <li key={i}>{f.name}: {f.cal} cal / {f.prot}g <button onClick={() => removeFood(i)}>✖</button></li>)}</ul>
         </>
       ) : (
