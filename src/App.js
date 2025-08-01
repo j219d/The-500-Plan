@@ -91,7 +91,14 @@ function App() {
   const today = new Date().toISOString().split("T")[0];
 
   const [screen, setScreen] = useState("home");
-  const [editing, setEditing] = useState(true);
+  
+const initialEditing = !localStorage.getItem("sex") ||
+                       !localStorage.getItem("age") ||
+                       !localStorage.getItem("height") ||
+                       !localStorage.getItem("weight");
+
+const [editing, setEditing] = useState(initialEditing);
+
 
   const [sex, setSex] = useState("");
   const [age, setAge] = useState("");
@@ -234,6 +241,85 @@ function App() {
       </div>
 
       {screen === "home" && (
+        <>
+          <h3>Calories</h3>
+          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
+            <div
+              style={{
+                width: `${Math.min((calsToday / calorieGoal) * 100, 100)}%`,
+                background: "#2196f3",
+                height: "100%",
+                transition: "width 0.3s ease",
+              }}
+            />
+          </div>
+          <p>{calsToday} / {calorieGoal} kcal</p>
+
+          <h3>Protein</h3>
+          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
+            <div
+              style={{
+                width: `${Math.min((proteinToday / proteinGoal) * 100, 100)}%`,
+                background: "#4caf50",
+                height: "100%",
+                transition: "width 0.3s ease",
+              }}
+            />
+          </div>
+          <p>{proteinToday} / {proteinGoal} g</p>
+
+          <h4>Steps</h4>
+          <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" />
+          <p>+{caloriesFromSteps} cal from steps</p>
+        </>
+      )}
+
+      {screen === "food" && (
+        <>
+          <h3>Food Search</h3>
+          <input placeholder="Search food..." value={search} onChange={e => setSearch(e.target.value)} />
+          {foodList.length > 0 && (
+            <ul style={{ background: '#f2f2f2', padding: 8, borderRadius: 4, listStyle: 'none' }}>
+              {foodList.map((f, idx) => (
+                <li key={idx} onClick={() => handlePresetSelect(f)} style={{ padding: 4, cursor: 'pointer' }}>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <h4>Or Enter Manually</h4>
+          <input placeholder="Food name" value={customName} onChange={e => setCustomName(e.target.value)} />
+          <input placeholder="Calories" type="number" value={customCal} onChange={e => setCustomCal(e.target.value)} />
+          <input placeholder="Protein" type="number" value={customProt} onChange={e => setCustomProt(e.target.value)} />
+          <button onClick={addCustomFood}>Add Food</button>
+
+          <h4>Logged Foods Today</h4>
+          <ul>
+            {foodLog.map((item, idx) => (
+              <li key={idx}>
+                {item.name} — {item.cal} kcal / {item.prot}g protein
+                <button onClick={() => removeFood(idx)} style={{ marginLeft: 8, color: "red" }}>✖</button>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {screen === "weight" && (
+        <>
+          <h3>Track Weight</h3>
+          <input placeholder="Today's weight" value={newWeight} onChange={e => setNewWeight(e.target.value)} />
+          <button onClick={addWeight}>Log</button>
+          <Line data={graphData} />
+          <ul>
+            {weightLog.map((w, i) => (
+              <li key={i}>{w.date}: {w.weight} lb</li>
+            ))}
+          </ul>
+        </>
+      )}
+
         <>
           <h3>Calories</h3>
           <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
