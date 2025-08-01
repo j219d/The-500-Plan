@@ -100,13 +100,20 @@ export default function App() {
 
   return (
     <div className="container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>The 500 Plan</h2>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '1rem'
+      }}>
+        <h2 style={{ fontSize: '24px', margin: 0 }}>The 500 Plan</h2>
         <button onClick={() => setEditingProfile(true)} style={{
-          fontSize: '1.2rem',
+          fontSize: '20px',
           background: 'none',
           border: 'none',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          marginLeft: '8px',
+          marginTop: '-2px'
         }}>⚙️</button>
       </div>
 
@@ -146,8 +153,17 @@ export default function App() {
 
       {tab === "weight" && (
         <>
-          <h2>Track Weight</h2>
-          <input type="number" placeholder="Current weight (lb)" value={entry.weight} onChange={e => setEntry({ ...entry, weight: e.target.value })} />
+          <h2>Weight Tracker</h2>
+          <div style={{ fontSize: '1.6rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+            {entry.weight ? `${entry.weight} lb` : 'Enter today’s weight'}
+          </div>
+          <input
+            type="number"
+            placeholder="Current weight (lb)"
+            value={entry.weight}
+            onChange={e => setEntry({ ...entry, weight: e.target.value })}
+          />
+          <p style={{ fontSize: '0.9rem', color: '#555' }}>{todayKey()}</p>
         </>
       )}
 
