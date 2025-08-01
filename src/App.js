@@ -196,7 +196,7 @@ function App() {
 
       {screen === "food" && (
         <>
-          <h3>Add Food</h3>
+          <h3>Food Search</h3>
           <input placeholder="Search food..." value={search} onChange={e => setSearch(e.target.value)} />
           {foodList.length > 0 && (
             <ul style={{ background: '#f2f2f2', padding: 8, borderRadius: 4, listStyle: 'none' }}>
@@ -239,11 +239,11 @@ function App() {
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
         display: "flex", justifyContent: "space-around",
-        background: "#fff", padding: 12, borderTop: "1px solid #ccc"
+        background: "#fff", borderTop: "1px solid #ccc"
       }}>
-        <button onClick={() => setScreen("home")}>🏠</button>
-        <button onClick={() => setScreen("food")}>🍽</button>
-        <button onClick={() => setScreen("weight")}>⚖️</button>
+        <button style={{ flex: 1, padding: 16, fontSize: 18 }} onClick={() => setScreen("home")}>Home</button>
+        <button style={{ flex: 1, padding: 16, fontSize: 18 }} onClick={() => setScreen("food")}>Food</button>
+        <button style={{ flex: 1, padding: 16, fontSize: 18 }} onClick={() => setScreen("weight")}>Weight</button>
       </div>
     </div>
   );
