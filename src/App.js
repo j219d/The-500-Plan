@@ -85,6 +85,44 @@ export const presetFoods = [
   "Yogurt 0% - 117 kcal / 20g protein",
 ];
 
+function bmr(sex, height, weight, age) {
+  if (!height || !weight || !age) return 1600;
+  const h = parseInt(height), w = parseFloat(weight), a = parseInt(age);
+  const heightCm = h * 2.54;
+  const weightKg = w * 0.453592;
+  return Math.round(
+    sex === "male"
+      ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
+      : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
+  );
+}
+
+const ProgressBar = ({ value, goal, color, label }) => (
+  <>
+    <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
+      <div
+        style={{
+          width: `${Math.min((value / goal) * 100, 100)}%`,
+          background: color,
+          height: "100%",
+          transition: "width 0.3s ease",
+        }}
+      />
+    </div>
+    {label && <p>{label}</p>}
+  </>
+);
+
+const navBtnStyle = (active, color) => ({
+  flex: 1,
+  padding: 10,
+  fontSize: 16,
+  background: "none",
+  border: "none",
+  color: active ? color : "#777",
+  fontWeight: active ? "bold" : "normal"
+});
+
 function App() {
   const today = new Date().toISOString().split("T")[0];
   const [screen, setScreen] = useState("home");
@@ -92,57 +130,32 @@ function App() {
   const [age, setAge] = useState(() => localStorage.getItem("age") || "");
   const [height, setHeight] = useState(() => localStorage.getItem("height") || "");
   const [weight, setWeight] = useState(() => localStorage.getItem("weight") || "");
-  const [editing, setEditing] = useState(() => {
-  const s = localStorage.getItem("sex");
-  const a = localStorage.getItem("age");
-  const h = localStorage.getItem("height");
-  const w = localStorage.getItem("weight");
-  return !(s && a && h && w);
-});
+  const [editing, setEditing] = useState(() => !(sex && age && height && weight));
 
-  const [steps, setSteps] = useState(0);
-  const [foodLog, setFoodLog] = useState([]);
-  const [weightLog, setWeightLog] = useState([]);
+  const [steps, setSteps] = useState(() => parseInt(localStorage.getItem(`steps-${today}`)) || 0);
+  const [foodLog, setFoodLog] = useState(() => {
+    const saved = localStorage.getItem(`foodLog-${today}`);
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [weightLog, setWeightLog] = useState(() => {
+    const saved = localStorage.getItem("weightLog");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [search, setSearch] = useState("");
   const [foodList, setFoodList] = useState([]);
   const [customName, setCustomName] = useState("");
   const [customCal, setCustomCal] = useState("");
   const [customProt, setCustomProt] = useState("");
   const [newWeight, setNewWeight] = useState("");
+  const [error, setError] = useState("");
+  const [lockedIn, setLockedIn] = useState(false);
 
+  const caloriesFromSteps = Math.round(steps * 0.04);
+  const calorieGoal = bmr(sex, height, weight, age) - 500 + caloriesFromSteps;
+  const proteinGoal = Math.round(parseFloat(weight) * 0.8);
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
-  const caloriesFromSteps = Math.round(steps * 0.04);
-  const calorieGoal = bmr() - 500 + caloriesFromSteps;
-  const proteinGoal = Math.round(parseFloat(weight) * 0.8);
-
-  function bmr() {
-    const h = parseInt(height), w = parseFloat(weight), a = parseInt(age);
-    if (!h || !w || !a) return 1600;
-    const heightCm = h * 2.54, weightKg = w * 0.453592;
-    return Math.round(
-      sex === "male"
-        ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
-        : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
-    );
-  }
-
-  useEffect(() => {
-    const s = localStorage.getItem("sex");
-    const a = localStorage.getItem("age");
-    const h = localStorage.getItem("height");
-    const w = localStorage.getItem("weight");
-    if (s && a && h && w) {
-      setSex(s); setAge(a); setHeight(h); setWeight(w);
-      setEditing(false);
-    }
-    const food = localStorage.getItem(`foodLog-${today}`);
-    const step = localStorage.getItem(`steps-${today}`);
-    const weights = localStorage.getItem("weightLog");
-    if (food) setFoodLog(JSON.parse(food));
-    if (step) setSteps(parseInt(step));
-    if (weights) setWeightLog(JSON.parse(weights));
-  }, []);
 
   useEffect(() => {
     localStorage.setItem("sex", sex);
@@ -172,33 +185,39 @@ function App() {
     const [kcal, prot] = values.replace(/kcal|protein/g, "").split("/");
     const cals = parseFloat(kcal.trim());
     const pro = parseFloat(prot.trim());
+    if (!namePart || isNaN(cals) || isNaN(pro)) return;
     setFoodLog([...foodLog, { name: namePart, cal: cals, prot: pro }]);
-    setSearch(""); setFoodList([]);
+    setSearch("");
+    setFoodList([]);
   };
 
   const addCustomFood = () => {
     const cals = parseFloat(customCal);
     const pro = parseFloat(customProt);
-    if (!isNaN(cals) && !isNaN(pro) && customName) {
-      setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
-      setCustomName(""); setCustomCal(""); setCustomProt("");
+    if (!customName || isNaN(cals) || isNaN(pro)) {
+      setError("Please enter valid name, calories, and protein.");
+      return;
     }
+    if (pro > 1000) {
+      setError("Protein can't be more than 1000g.");
+      return;
+    }
+    setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
+    setCustomName(""); setCustomCal(""); setCustomProt(""); setError("");
   };
 
-  const removeFood = (indexToRemove) => {
-    const updated = foodLog.filter((_, idx) => idx !== indexToRemove);
-    setFoodLog(updated);
+  const removeFood = (index) => {
+    setFoodLog(foodLog.filter((_, i) => i !== index));
   };
 
   const addWeight = () => {
     const w = parseFloat(newWeight);
-    if (!isNaN(w)) {
-      const entry = { date: today, weight: w };
-      const updated = [...weightLog, entry];
-      setWeightLog(updated);
-      localStorage.setItem("weightLog", JSON.stringify(updated));
-      setNewWeight("");
-    }
+    if (isNaN(w)) return;
+    const entry = { date: today, weight: w };
+    const updated = [...weightLog, entry];
+    setWeightLog(updated);
+    localStorage.setItem("weightLog", JSON.stringify(updated));
+    setNewWeight("");
   };
 
   const graphData = {
@@ -206,9 +225,9 @@ function App() {
     datasets: [{
       label: "Weight (lbs)",
       data: weightLog.map(w => w.weight),
-      fill: false,
       borderColor: "blue",
-      tension: 0.1,
+      fill: false,
+      tension: 0.3,
     }],
   };
 
@@ -227,7 +246,7 @@ function App() {
   }
 
   return (
-    <div style={{ padding: 24, paddingBottom: 80, maxWidth: 500, margin: "auto", fontFamily: "sans-serif" }}>
+    <div style={{ padding: 24, paddingBottom: 100, maxWidth: 500, margin: "auto", fontFamily: "sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2 style={{ margin: 0 }}>The 500 Plan</h2>
         <button onClick={() => setEditing(true)}>⚙️</button>
@@ -237,14 +256,14 @@ function App() {
         <>
           <h3>Calories</h3>
           <ProgressBar value={calsToday} goal={calorieGoal} color="#2196f3" label={`${calsToday} / ${calorieGoal} kcal`} />
-
           <h3>Protein</h3>
           <ProgressBar value={proteinToday} goal={proteinGoal} color="#4caf50" label={`${proteinToday} / ${proteinGoal} g`} />
-
           <h3>Steps</h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
-          <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" style={{ marginTop: 6 }} />
+          <input value={steps} onChange={e => setSteps(Math.max(+e.target.value, 0))} placeholder="Steps today" />
           <p>+{caloriesFromSteps} cal from steps</p>
+          <button onClick={() => setLockedIn(true)} style={{ marginTop: 12, background: "#000", color: "#fff", padding: 10, borderRadius: 6 }}>🏁 Done Eating Today</button>
+          {lockedIn && <p style={{ color: "green", fontWeight: "bold" }}>Day Locked In! See you tomorrow ✅</p>}
         </>
       )}
 
@@ -253,7 +272,7 @@ function App() {
           <h3>Food Search</h3>
           <input placeholder="Search food..." value={search} onChange={e => setSearch(e.target.value)} />
           {foodList.length > 0 && (
-            <ul style={{ background: '#f2f2f2', padding: 8, borderRadius: 4, listStyle: 'none' }}>
+            <ul style={{ background: '#f2f2f2', padding: 8, borderRadius: 4 }}>
               {foodList.map((f, idx) => (
                 <li key={idx} onClick={() => handlePresetSelect(f)} style={{ padding: 4, cursor: 'pointer' }}>
                   {f}
@@ -261,13 +280,12 @@ function App() {
               ))}
             </ul>
           )}
-
           <h4>Or Enter Manually</h4>
           <input placeholder="Food name" value={customName} onChange={e => setCustomName(e.target.value)} />
           <input placeholder="Calories" type="number" value={customCal} onChange={e => setCustomCal(e.target.value)} />
           <input placeholder="Protein" type="number" value={customProt} onChange={e => setCustomProt(e.target.value)} />
           <button onClick={addCustomFood}>Add Food</button>
-
+          {error && <p style={{ color: "red" }}>{error}</p>}
           <h4>Logged Foods Today</h4>
           <ul>
             {foodLog.map((item, idx) => (
@@ -300,45 +318,17 @@ function App() {
         left: 0,
         right: 0,
         display: "flex",
-        justifyContent: "space-around",
-        alignItems: "center",
         background: "#fff",
         borderTop: "1px solid #ccc",
         height: 60,
         boxShadow: "0 -1px 5px rgba(0,0,0,0.1)"
       }}>
-        <button style={navBtnStyle(screen === "home")} onClick={() => setScreen("home")}>🏠 Home</button>
-        <button style={navBtnStyle(screen === "food")} onClick={() => setScreen("food")}>🍽 Food</button>
-        <button style={navBtnStyle(screen === "weight")} onClick={() => setScreen("weight")}>⚖️ Weight</button>
+        <button style={navBtnStyle(screen === "home", "#000")} onClick={() => setScreen("home")}>🏠 Home</button>
+        <button style={navBtnStyle(screen === "food", "#4caf50")} onClick={() => setScreen("food")}>🍽 Food</button>
+        <button style={navBtnStyle(screen === "weight", "#2196f3")} onClick={() => setScreen("weight")}>⚖️ Weight</button>
       </div>
     </div>
   );
 }
-
-const ProgressBar = ({ value, goal, color, label }) => (
-  <>
-    <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
-      <div
-        style={{
-          width: `${Math.min((value / goal) * 100, 100)}%`,
-          background: color,
-          height: "100%",
-          transition: "width 0.3s ease",
-        }}
-      />
-    </div>
-    {label && <p>{label}</p>}
-  </>
-);
-
-const navBtnStyle = (active) => ({
-  flex: 1,
-  padding: 10,
-  fontSize: 16,
-  background: "none",
-  border: "none",
-  color: active ? "#000" : "#777",
-  fontWeight: active ? "bold" : "normal"
-});
 
 export default App;
