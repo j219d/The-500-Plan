@@ -85,17 +85,18 @@ export const presetFoods = [
   "Yogurt 0% - 117 kcal / 20g protein",
 ];
 
-
 function App() {
   const today = new Date().toISOString().split("T")[0];
   const [screen, setScreen] = useState("home");
 
+  // User profile
   const [sex, setSex] = useState(() => localStorage.getItem("sex") || "");
   const [age, setAge] = useState(() => localStorage.getItem("age") || "");
   const [height, setHeight] = useState(() => localStorage.getItem("height") || "");
   const [weight, setWeight] = useState(() => localStorage.getItem("weight") || "");
   const [editing, setEditing] = useState(() => !(sex && age && height && weight));
 
+  // Today’s data
   const [steps, setSteps] = useState(() => parseInt(localStorage.getItem(`steps-${today}`)) || 0);
   const [foodLog, setFoodLog] = useState(() => {
     const saved = localStorage.getItem(`foodLog-${today}`);
@@ -106,6 +107,7 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Food search + custom inputs
   const [search, setSearch] = useState("");
   const [foodList, setFoodList] = useState([]);
   const [customName, setCustomName] = useState("");
@@ -113,24 +115,27 @@ function App() {
   const [customProt, setCustomProt] = useState("");
   const [newWeight, setNewWeight] = useState("");
 
+  // Totals & goals
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
-
   function bmr() {
-    const h = parseInt(height), w = parseFloat(weight), a = parseInt(age);
+    const h = parseInt(height),
+      w = parseFloat(weight),
+      a = parseInt(age);
     if (!h || !w || !a) return 1600;
-    const heightCm = h * 2.54, weightKg = w * 0.453592;
+    const heightCm = h * 2.54,
+      weightKg = w * 0.453592;
     return Math.round(
       sex === "male"
         ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
         : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
     );
   }
-
   const calorieGoal = bmr() - 500 + caloriesFromSteps;
   const proteinGoal = Math.round(parseFloat(weight) * 0.8);
 
+  // Persist profile
   useEffect(() => {
     localStorage.setItem("sex", sex);
     localStorage.setItem("age", age);
@@ -138,50 +143,45 @@ function App() {
     localStorage.setItem("weight", weight);
   }, [sex, age, height, weight]);
 
+  // Persist today’s logs
   useEffect(() => {
     localStorage.setItem(`foodLog-${today}`, JSON.stringify(foodLog));
   }, [foodLog]);
-
   useEffect(() => {
     localStorage.setItem(`steps-${today}`, steps.toString());
   }, [steps]);
 
+  // Update food search results
   useEffect(() => {
-    const results = presetFoods.filter(f => {
-      const name = f.split(" - ")[0].toLowerCase();
-      return name.includes(search.toLowerCase());
-    });
-    setFoodList(search.length > 0 ? results : []);
+    const results = presetFoods.filter((f) =>
+      f.split(" - ")[0].toLowerCase().includes(search.toLowerCase())
+    );
+    setFoodList(search.length ? results : []);
   }, [search]);
 
+  // Handlers
   const handlePresetSelect = (food) => {
     const [namePart, values] = food.split(" - ");
     const [kcal, prot] = values.replace(/kcal|protein/g, "").split("/");
-    const cals = parseFloat(kcal.trim());
-    const pro = parseFloat(prot.trim());
-    setFoodLog([...foodLog, { name: namePart, cal: cals, prot: pro }]);
-    setSearch(""); setFoodList([]);
+    setFoodLog([...foodLog, { name: namePart, cal: +kcal.trim(), prot: +prot.trim() }]);
+    setSearch("");
+    setFoodList([]);
   };
 
   const addCustomFood = () => {
-    const cals = parseFloat(customCal);
-    const pro = parseFloat(customProt);
+    const cals = parseFloat(customCal),
+      pro = parseFloat(customProt);
     if (!customName || isNaN(cals) || isNaN(pro)) {
       alert("Please enter valid name, calories, and protein.");
       return;
     }
-    if (pro > 1000) {
-      alert("Protein seems too high.");
-      return;
-    }
     setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
-    setCustomName(""); setCustomCal(""); setCustomProt("");
+    setCustomName("");
+    setCustomCal("");
+    setCustomProt("");
   };
 
-  const removeFood = (indexToRemove) => {
-    const updated = foodLog.filter((_, idx) => idx !== indexToRemove);
-    setFoodLog(updated);
-  };
+  const removeFood = (i) => setFoodLog(foodLog.filter((_, idx) => idx !== idx));
 
   const addWeight = () => {
     const w = parseFloat(newWeight);
@@ -199,31 +199,38 @@ function App() {
     setSteps(0);
     localStorage.removeItem(`foodLog-${today}`);
     localStorage.removeItem(`steps-${today}`);
-    window.location.reload(); // ensures the calorieGoal refreshes properly
+    // reload so bmr/goal recalcs from scratch
+    window.location.reload();
   };
 
+  // UI components
   const ProgressBar = ({ value, goal, color, label }) => (
     <>
       <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
-        <div style={{
-          width: `${Math.min((value / goal) * 100, 100)}%`,
-          background: color,
-          height: "100%", transition: "width 0.3s ease",
-        }} />
+        <div
+          style={{
+            width: `${Math.min((value / goal) * 100, 100)}%`,
+            background: color,
+            height: "100%",
+            transition: "width 0.3s ease",
+          }}
+        />
       </div>
       {label && <p>{label}</p>}
     </>
   );
 
   const graphData = {
-    labels: weightLog.map(w => w.date),
-    datasets: [{
-      label: "Weight (lbs)",
-      data: weightLog.map(w => w.weight),
-      fill: false,
-      borderColor: "blue",
-      tension: 0.1,
-    }],
+    labels: weightLog.map((w) => w.date),
+    datasets: [
+      {
+        label: "Weight (lbs)",
+        data: weightLog.map((w) => w.weight),
+        fill: false,
+        borderColor: "blue",
+        tension: 0.1,
+      },
+    ],
   };
 
   const navBtnStyle = (active) => ({
@@ -233,8 +240,7 @@ function App() {
     background: "none",
     border: "none",
     fontWeight: active ? "bold" : "normal",
-    color: "#000",
-    fontFamily: "Apple Color Emoji,Segoe UI Emoji,NotoColorEmoji,sans-serif",
+    filter: "none",     // no grayscale
   });
 
   if (editing) {
@@ -242,10 +248,28 @@ function App() {
       <div style={{ padding: 24 }}>
         <h2>The 500 Plan</h2>
         <p>Track food. Hit your goals. Lose a pound a week.</p>
-        <label>Sex: <select value={sex} onChange={e => setSex(e.target.value)}><option>male</option><option>female</option></select></label><br />
-        <label>Age: <input value={age} onChange={e => setAge(e.target.value)} /></label><br />
-        <label>Height (inches): <input value={height} onChange={e => setHeight(e.target.value)} /></label><br />
-        <label>Weight (lbs): <input value={weight} onChange={e => setWeight(e.target.value)} /></label><br />
+        <label>
+          Sex:{" "}
+          <select value={sex} onChange={(e) => setSex(e.target.value)}>
+            <option>male</option>
+            <option>female</option>
+          </select>
+        </label>
+        <br />
+        <label>
+          Age: <input value={age} onChange={(e) => setAge(e.target.value)} />
+        </label>
+        <br />
+        <label>
+          Height (inches):{" "}
+          <input value={height} onChange={(e) => setHeight(e.target.value)} />
+        </label>
+        <br />
+        <label>
+          Weight (lbs):{" "}
+          <input value={weight} onChange={(e) => setWeight(e.target.value)} />
+        </label>
+        <br />
         <button onClick={() => setEditing(false)}>Save & Start</button>
       </div>
     );
@@ -253,22 +277,46 @@ function App() {
 
   return (
     <div style={{ padding: 24, paddingBottom: 80, maxWidth: 500, margin: "auto", fontFamily: "sans-serif" }}>
+      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2>The 500 Plan</h2>
         <button onClick={() => setEditing(true)}>⚙️</button>
       </div>
 
+      {/* Screens */}
       {screen === "home" && (
         <>
           <h3>Calories</h3>
-          <ProgressBar value={calsToday} goal={calorieGoal} color="#2196f3" label={`${calsToday} / ${calorieGoal} kcal`} />
+          <ProgressBar
+            value={calsToday}
+            goal={calorieGoal}
+            color="#2196f3"
+            label={`${calsToday} / ${calorieGoal} kcal`}
+          />
           <h3>Protein</h3>
-          <ProgressBar value={proteinToday} goal={proteinGoal} color="#4caf50" label={`${proteinToday} / ${proteinGoal} g`} />
+          <ProgressBar
+            value={proteinToday}
+            goal={proteinGoal}
+            color="#4caf50"
+            label={`${proteinToday} / ${proteinGoal} g`}
+          />
           <h3>Steps</h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
-          <input value={steps} onChange={e => setSteps(Math.max(0, +e.target.value))} />
+          <input
+            value={steps}
+            onChange={(e) => setSteps(Math.max(0, +e.target.value))}
+          />
           <p>+{caloriesFromSteps} cal from steps</p>
-          <button onClick={resetDay} style={{ marginTop: 10, background: "#000", color: "#fff", padding: 10, borderRadius: 5 }}>
+          <button
+            onClick={resetDay}
+            style={{
+              marginTop: 10,
+              background: "#000",
+              color: "#fff",
+              padding: 10,
+              borderRadius: 5,
+            }}
+          >
             🔄 Reset Day
           </button>
         </>
@@ -277,26 +325,61 @@ function App() {
       {screen === "food" && (
         <>
           <h3>Food Search</h3>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search food..." />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search food…"
+          />
           {foodList.length > 0 && (
-            <ul style={{ background: '#f2f2f2', padding: 8, borderRadius: 4, listStyle: 'none' }}>
+            <ul
+              style={{
+                background: "#f2f2f2",
+                padding: 8,
+                borderRadius: 4,
+                listStyle: "none",
+              }}
+            >
               {foodList.map((f, idx) => (
-                <li key={idx} onClick={() => handlePresetSelect(f)} style={{ padding: 4, cursor: 'pointer' }}>{f}</li>
+                <li
+                  key={idx}
+                  onClick={() => handlePresetSelect(f)}
+                  style={{ padding: 4, cursor: "pointer" }}
+                >
+                  {f}
+                </li>
               ))}
             </ul>
           )}
           <h4>Or Enter Manually</h4>
-          <input placeholder="Food name" value={customName} onChange={e => setCustomName(e.target.value)} />
-          <input placeholder="Calories" type="number" value={customCal} onChange={e => setCustomCal(e.target.value)} />
-          <input placeholder="Protein" type="number" value={customProt} onChange={e => setCustomProt(e.target.value)} />
+          <input
+            placeholder="Food name"
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+          />
+          <input
+            placeholder="Calories"
+            type="number"
+            value={customCal}
+            onChange={(e) => setCustomCal(e.target.value)}
+          />
+          <input
+            placeholder="Protein"
+            type="number"
+            value={customProt}
+            onChange={(e) => setCustomProt(e.target.value)}
+          />
           <button onClick={addCustomFood}>Add Food</button>
-
           <h4>Logged Foods Today</h4>
           <ul>
             {foodLog.map((item, idx) => (
               <li key={idx}>
                 {item.name} — {item.cal} kcal / {item.prot}g protein
-                <button onClick={() => removeFood(idx)} style={{ marginLeft: 8, color: "red" }}>✖</button>
+                <button
+                  onClick={() => removeFood(idx)}
+                  style={{ marginLeft: 8, color: "red" }}
+                >
+                  ✖
+                </button>
               </li>
             ))}
           </ul>
@@ -306,22 +389,56 @@ function App() {
       {screen === "weight" && (
         <>
           <h3>Track Weight</h3>
-          <input value={newWeight} onChange={e => setNewWeight(e.target.value)} placeholder="Today's weight" />
+          <input
+            value={newWeight}
+            onChange={(e) => setNewWeight(e.target.value)}
+            placeholder="Today's weight"
+          />
           <button onClick={addWeight}>Log</button>
           <Line data={graphData} />
-          <ul>{weightLog.map((w, i) => <li key={i}>{w.date}: {w.weight} lb</li>)}</ul>
+          <ul>
+            {weightLog.map((w, i) => (
+              <li key={i}>
+                {w.date}: {w.weight} lb
+              </li>
+            ))}
+          </ul>
         </>
       )}
 
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        display: "flex", justifyContent: "space-around",
-        background: "#fff", borderTop: "1px solid #ccc", height: 60,
-        boxShadow: "0 -1px 5px rgba(0,0,0,0.1)"
-      }}>
-        <button style={navBtnStyle(screen === "home")} onClick={() => setScreen("home")}>🏠 Home</button>
-        <button style={navBtnStyle(screen === "food")} onClick={() => setScreen("food")}>🍽 Food</button>
-        <button style={navBtnStyle(screen === "weight")} onClick={() => setScreen("weight")}>⚖️ Weight</button>
+      {/* Nav Bar */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "space-around",
+          background: "#fff",
+          borderTop: "1px solid #ccc",
+          height: 60,
+          boxShadow: "0 -1px 5px rgba(0,0,0,0.1)",
+        }}
+      >
+        <button
+          style={navBtnStyle(screen === "home")}
+          onClick={() => setScreen("home")}
+        >
+          <span style={{ fontFamily: "Apple Color Emoji,Segoe UI Emoji" }}>🏠</span> Home
+        </button>
+        <button
+          style={navBtnStyle(screen === "food")}
+          onClick={() => setScreen("food")}
+        >
+          <span style={{ fontFamily: "Apple Color Emoji,Segoe UI Emoji" }}>🍽️</span> Food
+        </button>
+        <button
+          style={navBtnStyle(screen === "weight")}
+          onClick={() => setScreen("weight")}
+        >
+          <span style={{ fontFamily: "Apple Color Emoji,Segoe UI Emoji" }}>⚖️</span> Weight
+        </button>
       </div>
     </div>
   );
