@@ -122,6 +122,7 @@ function App() {
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
 
+  // BMR
   function bmr() {
     const h = parseInt(height, 10),
       w = parseFloat(weight),
@@ -135,9 +136,13 @@ function App() {
         : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
     );
   }
+
   const calorieGoal = bmr() - 500 + caloriesFromSteps;
-  const proteinGoal = !isNaN(parseFloat(weight))
-    ? Math.round(parseFloat(weight) * 0.8)
+
+  // ← Fix: guard against NaN
+  const weightNum = parseFloat(weight);
+  const proteinGoal = Number.isFinite(weightNum)
+    ? Math.round(weightNum * 0.8)
     : 0;
 
   // ── Persist Profile ─────────────────────────────────────────────────────
@@ -189,8 +194,8 @@ function App() {
     setCustomProt("");
   };
 
-  const removeFood = (idxToRemove) =>
-    setFoodLog(foodLog.filter((_, idx) => idx !== idxToRemove));
+  const removeFood = (idx) =>
+    setFoodLog(foodLog.filter((_, i) => i !== idx));
 
   const addWeight = () => {
     const w = parseFloat(newWeight);
@@ -204,12 +209,11 @@ function App() {
   };
 
   const resetDay = () => {
-    // clear today’s logs
     setFoodLog([]);
     setSteps(0);
     localStorage.removeItem(`foodLog-${today}`);
     localStorage.removeItem(`steps-${today}`);
-    // reload to recalc BMR-500
+    // force recalc of BMR-500 on next render
     window.location.reload();
   };
 
@@ -250,7 +254,7 @@ function App() {
     background: "none",
     border: "none",
     fontWeight: active ? "bold" : "normal",
-    filter: "none", // no grayscale
+    filter: "none",             // ← no grayscale
     cursor: "pointer",
   });
 
@@ -289,13 +293,11 @@ function App() {
 
   return (
     <div style={{ padding: 24, paddingBottom: 80, maxWidth: 500, margin: "auto", fontFamily: "sans-serif" }}>
-      {/* header */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2>The 500 Plan</h2>
         <button onClick={() => setEditing(true)}>⚙️</button>
       </div>
 
-      {/* screens */}
       {screen === "home" && (
         <>
           <h3>Calories</h3>
@@ -420,7 +422,6 @@ function App() {
         </>
       )}
 
-      {/* nav */}
       <div
         style={{
           position: "fixed",
