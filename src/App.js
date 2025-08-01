@@ -86,17 +86,25 @@ export const presetFoods = [
 ];
 
 function App() {
-  const today = new Date().toISOString().split("T")[0];
+  // ── LOCAL DATE (YYYY-MM-DD) ─────────────────────────────────────────────
+  const today = (() => {
+    const d = new Date();
+    const Y = d.getFullYear();
+    const M = String(d.getMonth() + 1).padStart(2, "0");
+    const D = String(d.getDate()).padStart(2, "0");
+    return `${Y}-${M}-${D}`;
+  })();
+
   const [screen, setScreen] = useState("home");
 
-  // ── Profile ─────────────────────────────────────────────────────────────
+  // ── PROFILE ─────────────────────────────────────────────────────────────
   const [sex, setSex] = useState(() => localStorage.getItem("sex") || "");
   const [age, setAge] = useState(() => localStorage.getItem("age") || "");
   const [height, setHeight] = useState(() => localStorage.getItem("height") || "");
   const [weight, setWeight] = useState(() => localStorage.getItem("weight") || "");
   const [editing, setEditing] = useState(() => !(sex && age && height && weight));
 
-  // ── Today’s Logs ────────────────────────────────────────────────────────
+  // ── TODAY’S LOGS ────────────────────────────────────────────────────────
   const [steps, setSteps] = useState(() =>
     parseInt(localStorage.getItem(`steps-${today}`), 10) || 0
   );
@@ -109,7 +117,7 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // ── Food Search & Custom ─────────────────────────────────────────────────
+  // ── FOOD SEARCH & CUSTOM ─────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [foodList, setFoodList] = useState([]);
   const [customName, setCustomName] = useState("");
@@ -117,12 +125,11 @@ function App() {
   const [customProt, setCustomProt] = useState("");
   const [newWeight, setNewWeight] = useState("");
 
-  // ── Totals & Goals ──────────────────────────────────────────────────────
+  // ── CALCULATIONS ─────────────────────────────────────────────────────────
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
 
-  // BMR
   function bmr() {
     const h = parseInt(height, 10),
       w = parseFloat(weight),
@@ -139,13 +146,11 @@ function App() {
 
   const calorieGoal = bmr() - 500 + caloriesFromSteps;
 
-  // ← Fix: guard against NaN
-  const weightNum = parseFloat(weight);
-  const proteinGoal = Number.isFinite(weightNum)
-    ? Math.round(weightNum * 0.8)
-    : 0;
+  // → PROTEIN GOAL GUARD
+  const wNum = parseFloat(weight);
+  const proteinGoal = Number.isFinite(wNum) ? Math.round(wNum * 0.8) : 0;
 
-  // ── Persist Profile ─────────────────────────────────────────────────────
+  // ── PERSIST PROFILE ──────────────────────────────────────────────────────
   useEffect(() => {
     localStorage.setItem("sex", sex);
     localStorage.setItem("age", age);
@@ -153,7 +158,7 @@ function App() {
     localStorage.setItem("weight", weight);
   }, [sex, age, height, weight]);
 
-  // ── Persist Today’s Logs ─────────────────────────────────────────────────
+  // ── PERSIST TODAY’S LOGS ─────────────────────────────────────────────────
   useEffect(() => {
     localStorage.setItem(`foodLog-${today}`, JSON.stringify(foodLog));
   }, [foodLog]);
@@ -161,7 +166,7 @@ function App() {
     localStorage.setItem(`steps-${today}`, steps.toString());
   }, [steps]);
 
-  // ── Food Search Filter ──────────────────────────────────────────────────
+  // ── LIVE SEARCH ──────────────────────────────────────────────────────────
   useEffect(() => {
     const results = presetFoods.filter((f) =>
       f.split(" - ")[0].toLowerCase().includes(search.toLowerCase())
@@ -169,7 +174,7 @@ function App() {
     setFoodList(search.length ? results : []);
   }, [search]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────
+  // ── HANDLERS ────────────────────────────────────────────────────────────
   const handlePresetSelect = (food) => {
     const [namePart, values] = food.split(" - ");
     const [kcal, prot] = values.replace(/kcal|protein/g, "").split("/");
@@ -182,20 +187,23 @@ function App() {
   };
 
   const addCustomFood = () => {
-    const cals = parseFloat(customCal),
-      pro = parseFloat(customProt);
-    if (!customName || isNaN(cals) || isNaN(pro)) {
-      alert("Please enter valid name, calories, and protein.");
+    const cals = parseFloat(customCal);
+    let pro = parseFloat(customProt);
+    if (!customName || isNaN(cals)) {
+      alert("Please enter a name and valid calories.");
       return;
     }
+    // blank protein → 0
+    if (!customProt.trim() || isNaN(pro)) pro = 0;
     setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
     setCustomName("");
     setCustomCal("");
     setCustomProt("");
   };
 
-  const removeFood = (idx) =>
-    setFoodLog(foodLog.filter((_, i) => i !== idx));
+  const removeFood = (i) => {
+    setFoodLog(foodLog.filter((_, idx) => idx !== i));
+  };
 
   const addWeight = () => {
     const w = parseFloat(newWeight);
@@ -213,14 +221,19 @@ function App() {
     setSteps(0);
     localStorage.removeItem(`foodLog-${today}`);
     localStorage.removeItem(`steps-${today}`);
-    // force recalc of BMR-500 on next render
-    window.location.reload();
   };
 
-  // ── UI Components ───────────────────────────────────────────────────────
+  // ── UI COMPONENTS ───────────────────────────────────────────────────────
   const ProgressBar = ({ value, goal, color, label }) => (
     <>
-      <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
+      <div
+        style={{
+          height: 20,
+          background: "#eee",
+          borderRadius: 10,
+          overflow: "hidden",
+        }}
+      >
         <div
           style={{
             width: `${Math.min((value / goal) * 100, 100)}%`,
@@ -254,11 +267,11 @@ function App() {
     background: "none",
     border: "none",
     fontWeight: active ? "bold" : "normal",
-    filter: "none",             // ← no grayscale
+    filter: "none",
     cursor: "pointer",
   });
 
-  // ── Render ──────────────────────────────────────────────────────────────
+  // ── RENDER ─────────────────────────────────────────────────────────────
   if (editing) {
     return (
       <div style={{ padding: 24 }}>
@@ -273,7 +286,8 @@ function App() {
         </label>
         <br />
         <label>
-          Age: <input value={age} onChange={(e) => setAge(e.target.value)} />
+          Age:{" "}
+          <input value={age} onChange={(e) => setAge(e.target.value)} />
         </label>
         <br />
         <label>
@@ -292,7 +306,15 @@ function App() {
   }
 
   return (
-    <div style={{ padding: 24, paddingBottom: 80, maxWidth: 500, margin: "auto", fontFamily: "sans-serif" }}>
+    <div
+      style={{
+        padding: 24,
+        paddingBottom: 80,
+        maxWidth: 500,
+        margin: "auto",
+        fontFamily: "sans-serif, 'Apple Color Emoji'",
+      }}
+    >
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2>The 500 Plan</h2>
         <button onClick={() => setEditing(true)}>⚙️</button>
@@ -389,7 +411,7 @@ function App() {
           <ul>
             {foodLog.map((item, idx) => (
               <li key={idx}>
-                {item.name} — {item.cal} kcal / {item.prot}g protein
+                {item.name} — {item.cal} kcal / {item.prot}g protein{" "}
                 <button
                   onClick={() => removeFood(idx)}
                   style={{ marginLeft: 8, color: "red" }}
@@ -436,14 +458,23 @@ function App() {
           boxShadow: "0 -1px 5px rgba(0,0,0,0.1)",
         }}
       >
-        <button style={navBtnStyle(screen === "home")} onClick={() => setScreen("home")}>
-          <span style={{ fontFamily: "Apple Color Emoji,Segoe UI Emoji" }}>🏠</span> Home
+        <button
+          style={navBtnStyle(screen === "home")}
+          onClick={() => setScreen("home")}
+        >
+          🏠 Home
         </button>
-        <button style={navBtnStyle(screen === "food")} onClick={() => setScreen("food")}>
-          <span style={{ fontFamily: "Apple Color Emoji,Segoe UI Emoji" }}>🍽️</span> Food
+        <button
+          style={navBtnStyle(screen === "food")}
+          onClick={() => setScreen("food")}
+        >
+          🍽️ Food
         </button>
-        <button style={navBtnStyle(screen === "weight")} onClick={() => setScreen("weight")}>
-          <span style={{ fontFamily: "Apple Color Emoji,Segoe UI Emoji" }}>⚖️</span> Weight
+        <button
+          style={navBtnStyle(screen === "weight")}
+          onClick={() => setScreen("weight")}
+        >
+          ⚖️ Weight
         </button>
       </div>
     </div>
