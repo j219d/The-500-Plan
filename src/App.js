@@ -75,29 +75,37 @@ export const presetFoods = [
   "Yogurt 0% - 117 kcal / 20g protein",
 ];
 
-
 function App() {
+  const today = new Date().toISOString().split("T")[0];
   const [screen, setScreen] = useState("home");
-  const [sex, setSex] = useState(() => localStorage.getItem("sex") || "male");
-  const [age, setAge] = useState(() => localStorage.getItem("age") || "");
-  const [height, setHeight] = useState(() => localStorage.getItem("height") || "");
-  const [weight, setWeight] = useState(() => localStorage.getItem("weight") || "");
+  const [sex, setSex] = useState(localStorage.getItem("sex") || "");
+  const [age, setAge] = useState(localStorage.getItem("age") || "");
+  const [height, setHeight] = useState(localStorage.getItem("height") || "");
+  const [weight, setWeight] = useState(localStorage.getItem("weight") || "");
   const [editing, setEditing] = useState(!sex || !age || !height || !weight);
 
-  const [calsToday, setCalsToday] = useState(0);
-  const [proteinToday, setProteinToday] = useState(0);
-  const [steps, setSteps] = useState(0);
-  const [weightLog, setWeightLog] = useState([]);
+  const [steps, setSteps] = useState(() => parseInt(localStorage.getItem(`steps-${today}`)) || 0);
+  const [foodLog, setFoodLog] = useState(() => {
+    const saved = localStorage.getItem(`foodLog-${today}`);
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [weightLog, setWeightLog] = useState(() => {
+    const saved = localStorage.getItem("weightLog");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [newWeight, setNewWeight] = useState("");
 
   const [search, setSearch] = useState("");
   const [foodList, setFoodList] = useState([]);
-  const [foodLog, setFoodLog] = useState([]);
 
   const [customName, setCustomName] = useState("");
   const [customCal, setCustomCal] = useState("");
   const [customProt, setCustomProt] = useState("");
 
+  const [justAdded, setJustAdded] = useState(false);
+
+  const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
+  const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
 
   const bmr = () => {
@@ -118,6 +126,21 @@ function App() {
   const proteinGoal = Math.round(parseFloat(weight) * 0.8);
 
   useEffect(() => {
+    localStorage.setItem("sex", sex);
+    localStorage.setItem("age", age);
+    localStorage.setItem("height", height);
+    localStorage.setItem("weight", weight);
+  }, [sex, age, height, weight]);
+
+  useEffect(() => {
+    localStorage.setItem(`foodLog-${today}`, JSON.stringify(foodLog));
+  }, [foodLog]);
+
+  useEffect(() => {
+    localStorage.setItem(`steps-${today}`, steps.toString());
+  }, [steps]);
+
+  useEffect(() => {
     const results = presetFoods.filter(f => {
       const name = f.split(" - ")[0].toLowerCase();
       return name.startsWith(search.toLowerCase()) || name.includes(" " + search.toLowerCase());
@@ -130,39 +153,50 @@ function App() {
     const [kcal, prot] = values.replace(/kcal|protein/g, "").split("/");
     const cals = parseFloat(kcal.trim());
     const pro = parseFloat(prot.trim());
-    setCalsToday(calsToday + cals);
-    setProteinToday(proteinToday + pro);
     setFoodLog([...foodLog, { name: namePart, cal: cals, prot: pro }]);
     setSearch("");
     setFoodList([]);
+    showFlash();
   };
 
   const addCustomFood = () => {
     const cals = parseFloat(customCal);
     const pro = parseFloat(customProt);
     if (!isNaN(cals) && !isNaN(pro) && customName) {
-      setCalsToday(calsToday + cals);
-      setProteinToday(proteinToday + pro);
       setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
       setCustomName("");
       setCustomCal("");
       setCustomProt("");
+      showFlash();
     }
+  };
+
+  const removeFood = (indexToRemove) => {
+    const updated = foodLog.filter((_, idx) => idx !== indexToRemove);
+    setFoodLog(updated);
   };
 
   const addWeight = () => {
     const w = parseFloat(newWeight);
     if (!isNaN(w)) {
-      const today = new Date().toLocaleDateString();
-      setWeightLog([...weightLog, { date: today, weight: w }]);
+      const entry = { date: today, weight: w };
+      const updated = [...weightLog, entry];
+      setWeightLog(updated);
+      localStorage.setItem("weightLog", JSON.stringify(updated));
       setNewWeight("");
     }
+  };
+
+  const showFlash = () => {
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 800);
   };
 
   if (editing) {
     return (
       <div style={{ padding: 24 }}>
-        <h2>Setup</h2>
+        <h2>The 500 Plan</h2>
+        <p>Track food. Hit your goals. Lose a pound a week.</p>
         <label>Sex: <select value={sex} onChange={e => setSex(e.target.value)}><option>male</option><option>female</option></select></label><br />
         <label>Age: <input value={age} onChange={e => setAge(e.target.value)} /></label><br />
         <label>Height (inches): <input value={height} onChange={e => setHeight(e.target.value)} /></label><br />
@@ -173,11 +207,13 @@ function App() {
   }
 
   return (
-    <div style={{ padding: 24, paddingBottom: 100, maxWidth: 500, margin: "auto" }}>
+    <div style={{ padding: 24, paddingBottom: 100, maxWidth: 500, margin: "auto", fontFamily: "sans-serif" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <h2 style={{ margin: 0 }}>The 500 Plan</h2>
         <button onClick={() => setEditing(true)}>⚙️</button>
       </div>
+
+      {justAdded && <div style={{ color: "green", fontWeight: "bold" }}>✓ Food Added</div>}
 
       {screen === "home" && (
         <>
@@ -190,8 +226,8 @@ function App() {
           <p>{proteinToday} / {proteinGoal} g</p>
 
           <h4>Steps</h4>
-          <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps" />
-          <p>+{caloriesFromSteps} cal</p>
+          <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" />
+          <p>+{caloriesFromSteps} cal from steps</p>
         </>
       )}
 
@@ -218,7 +254,10 @@ function App() {
           <h4>Logged Foods Today</h4>
           <ul>
             {foodLog.map((item, idx) => (
-              <li key={idx}>{item.name} — {item.cal} kcal / {item.prot}g protein</li>
+              <li key={idx}>
+                {item.name} — {item.cal} kcal / {item.prot}g protein
+                <button onClick={() => removeFood(idx)} style={{ marginLeft: 8, color: "red" }}>✖</button>
+              </li>
             ))}
           </ul>
         </>
