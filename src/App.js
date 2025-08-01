@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 
 /* ------------------------------------------------------------------
-   Cal‑Deficit Tracker – v0.3
-   • Unit selector moved *after* weight input so users enter the number
-     first, then pick kg/lb (or cm/in) – as requested.
-   • Dynamic labels update on <select> change.
+   The 500 Plan – v0.4
+   • Ultra‑simple onboarding for US users: weight (lb), height (ft/in), age, sex
+   • Assumes imperial units everywhere; converts internally for BMR math
+   • Minimalist dashboard: calorie gauge, protein bar, food log, steps, weight
 -------------------------------------------------------------------*/
 
-// helpers ----------------------------------------------------------
+// ------ helpers ---------------------------------------------------
 const todayKey = () => new Date().toISOString().split("T")[0];
 const lbToKg = (lb) => lb * 0.45359237;
 const inchToCm = (inch) => inch * 2.54;
@@ -20,10 +20,10 @@ const loadJSON = (k, fb) => {
 
 export default function App() {
   /* ---------------- profile ---------------- */
-  const [profile, setProfile] = useState(() => loadJSON("paw_profile", null));
+  const [profile, setProfile] = useState(() => loadJSON("tfp_profile", null));
 
   /* ---------------- today entry ------------- */
-  const [entry, setEntry] = useState(() => loadJSON("paw_" + todayKey(), {
+  const [entry, setEntry] = useState(() => loadJSON("tfp_" + todayKey(), {
     foods: [],
     steps: "",
     weight: "",
@@ -36,31 +36,32 @@ export default function App() {
   const handleOnboard = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-    const units = fd.get("units");
-    const weightRaw = parseFloat(fd.get("weight"));
-    const heightRaw = parseFloat(fd.get("height"));
     const sex = fd.get("sex");
     const age = parseInt(fd.get("age"), 10);
+    const weightLb = parseFloat(fd.get("weight"));
+    const heightFt = parseInt(fd.get("heightFt"), 10);
+    const heightIn = parseInt(fd.get("heightIn"), 10);
 
-    const weightKg = units === "imperial" ? lbToKg(weightRaw) : weightRaw;
-    const heightCm = units === "imperial" ? inchToCm(heightRaw) : heightRaw;
+    const totalInches = heightFt * 12 + heightIn;
+    const weightKg = lbToKg(weightLb);
+    const heightCm = inchToCm(totalInches);
 
-    // Mifflin–St Jeor
+    // Mifflin–St Jeor BMR
     const bmr = sex === "male"
       ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
       : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
 
-    const maintenance = bmr * 1.2;
-    const targetCals = maintenance - 500;
-    const proteinTarget = weightKg * 1.6;
+    const maintenance = bmr * 1.2;      // sedentary default
+    const targetCals = maintenance - 500; // daily –500 kcal deficit
+    const proteinTarget = weightKg * 1.6; // g per kg BW
 
-    const p = { sex, age, units, weightStart: weightRaw, height: heightRaw, targetCals, proteinTarget };
-    saveJSON("paw_profile", p);
+    const p = { sex, age, weightLb, heightFt, heightIn, targetCals, proteinTarget };
+    saveJSON("tfp_profile", p);
     setProfile(p);
   };
 
   /* ---------------- persist entry ----------- */
-  useEffect(() => { saveJSON("paw_" + todayKey(), entry); }, [entry]);
+  useEffect(() => { saveJSON("tfp_" + todayKey(), entry); }, [entry]);
 
   /* ---------------- totals ------------------ */
   const totals = entry.foods.reduce((acc, f) => {
@@ -71,18 +72,10 @@ export default function App() {
 
   /* ---------------- onboarding UI ----------- */
   if (!profile) {
-    // small helper to sync label text
-    const setLabels = (unit) => {
-      document.getElementById("wt-unit").textContent = unit === "imperial" ? "lb" : "kg";
-      document.getElementById("ht-unit").textContent = unit === "imperial" ? "in" : "cm";
-    };
-
     return (
       <div style={styles.container}>
         <h2 style={{marginTop:0}}>Quick Setup</h2>
         <form onSubmit={handleOnboard} style={styles.form}>
-
-          {/* sex first (unchanged) */}
           <label>Sex:
             <select name="sex" defaultValue="male" style={styles.input}>
               <option value="male">Male</option>
@@ -90,38 +83,19 @@ export default function App() {
             </select>
           </label>
 
-          {/* weight input first */}
-          <label>Weight (<span id="wt-unit">kg</span>):
-            <input
-              name="weight" type="number" step="0.1" required style={styles.input}
-              placeholder="e.g. 70"
-            />
-          </label>
-
-          {/* unit selector comes next */}
-          <label>Units:
-            <select
-              name="units"
-              defaultValue="metric"
-              style={styles.input}
-              onChange={(e) => setLabels(e.target.value)}
-            >
-              <option value="metric">kg / cm</option>
-              <option value="imperial">lb / in</option>
-            </select>
-          </label>
-
-          {/* height */}
-          <label>Height (<span id="ht-unit">cm</span>):
-            <input
-              name="height" type="number" step="0.1" required style={styles.input}
-              placeholder="e.g. 170"
-            />
-          </label>
-
-          {/* age */}
           <label>Age:
             <input name="age" type="number" required style={styles.input} placeholder="e.g. 30" />
+          </label>
+
+          <label>Weight (lb):
+            <input name="weight" type="number" step="0.1" required style={styles.input} placeholder="e.g. 180" />
+          </label>
+
+          <label>Height:
+            <div style={{ display: "flex", gap: ".5rem" }}>
+              <input name="heightFt" type="number" required style={{...styles.input,width:"100%"}} placeholder="ft" />
+              <input name="heightIn" type="number" required style={{...styles.input,width:"100%"}} placeholder="in" />
+            </div>
           </label>
 
           <button style={styles.button}>Save & Continue</button>
@@ -134,7 +108,6 @@ export default function App() {
   const calPercent = Math.min(100, (totals.cals / profile.targetCals) * 100);
   const proteinPercent = Math.min(100, (totals.protein / profile.proteinTarget) * 100);
   const calGood = totals.cals <= profile.targetCals;
-  const wtLabel = profile.units === "imperial" ? "lbs" : "kg";
 
   const addFood = (e) => {
     e.preventDefault();
@@ -181,8 +154,8 @@ export default function App() {
 
       {/* weight */}
       <section style={styles.section}>
-        <h4>Weight ({wtLabel})</h4>
-        <input type="number" placeholder={`Current weight (${wtLabel})`} value={entry.weight} onChange={(e)=>setEntry({...entry,weight:e.target.value})} style={styles.input} />
+        <h4>Weight (lb)</h4>
+        <input type="number" placeholder="Current weight (lb)" value={entry.weight} onChange={(e)=>setEntry({...entry,weight:e.target.value})} style={styles.input} />
       </section>
     </div>
   );
