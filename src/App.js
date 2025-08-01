@@ -1,4 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { Line } from "react-chartjs-2";
+import { Chart as ChartJS, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from "chart.js";
+
+ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 
 export const presetFoods = [
   "Almond Milk (1/4 cup) - 23 kcal / 0.9g protein",
@@ -192,19 +196,42 @@ function App() {
     setTimeout(() => setJustAdded(false), 800);
   };
 
-  if (editing) {
-    return (
-      <div style={{ padding: 24 }}>
-        <h2>The 500 Plan</h2>
-        <p>Track food. Hit your goals. Lose a pound a week.</p>
-        <label>Sex: <select value={sex} onChange={e => setSex(e.target.value)}><option>male</option><option>female</option></select></label><br />
-        <label>Age: <input value={age} onChange={e => setAge(e.target.value)} /></label><br />
-        <label>Height (inches): <input value={height} onChange={e => setHeight(e.target.value)} /></label><br />
-        <label>Weight (lbs): <input value={weight} onChange={e => setWeight(e.target.value)} /></label><br />
-        <button onClick={() => setEditing(false)}>Save</button>
-      </div>
-    );
-  }
+  const recentWeights = weightLog.slice(-14);
+  const dates = recentWeights.map(entry => entry.date);
+  const weights = recentWeights.map(entry => entry.weight);
+  const average = weights.length ? (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1) : null;
+
+  const chartData = {
+    labels: dates,
+    datasets: [
+      {
+        label: "Weight (lbs)",
+        data: weights,
+        borderColor: "#3e95cd",
+        backgroundColor: "rgba(62,149,205,0.2)",
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4
+      },
+      {
+        label: "7-Day Avg",
+        data: weights.map(() => average),
+        borderColor: "#90ee90",
+        borderDash: [5, 5],
+        pointRadius: 0,
+        fill: false
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: true },
+      tooltip: { enabled: false }
+    }
+  };
 
   return (
     <div style={{ padding: 24, paddingBottom: 100, maxWidth: 500, margin: "auto", fontFamily: "sans-serif" }}>
@@ -213,66 +240,47 @@ function App() {
         <button onClick={() => setEditing(true)}>⚙️</button>
       </div>
 
-      {justAdded && <div style={{ color: "green", fontWeight: "bold" }}>✓ Food Added</div>}
-
-      {screen === "home" && (
+      {editing ? (
+        <>
+          <label>Sex: <select value={sex} onChange={e => setSex(e.target.value)}><option>male</option><option>female</option></select></label><br />
+          <label>Age: <input value={age} onChange={e => setAge(e.target.value)} /></label><br />
+          <label>Height (inches): <input value={height} onChange={e => setHeight(e.target.value)} /></label><br />
+          <label>Weight (lbs): <input value={weight} onChange={e => setWeight(e.target.value)} /></label><br />
+          <button onClick={() => setEditing(false)}>Save</button>
+        </>
+      ) : screen === "home" ? (
         <>
           <h3>Calories</h3>
           <progress max={calorieGoal} value={calsToday} style={{ width: "100%" }} />
           <p>{calsToday} / {calorieGoal} kcal</p>
-
           <h3>Protein</h3>
           <progress max={proteinGoal} value={proteinToday} style={{ width: "100%" }} />
           <p>{proteinToday} / {proteinGoal} g</p>
-
           <h4>Steps</h4>
           <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" />
           <p>+{caloriesFromSteps} cal from steps</p>
         </>
-      )}
-
-      {screen === "food" && (
+      ) : screen === "food" ? (
         <>
           <h3>Food Search</h3>
           <input placeholder="Search food..." value={search} onChange={e => setSearch(e.target.value)} />
-          {foodList.length > 0 && (
-            <ul style={{ background: '#f2f2f2', padding: 8, borderRadius: 4, listStyle: 'none' }}>
-              {foodList.map((f, idx) => (
-                <li key={idx} onClick={() => handlePresetSelect(f)} style={{ padding: 4, cursor: 'pointer' }}>
-                  {f}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <h4>Or Enter Manually</h4>
-          <input placeholder="Food name" value={customName} onChange={e => setCustomName(e.target.value)} />
-          <input placeholder="Calories" type="number" value={customCal} onChange={e => setCustomCal(e.target.value)} />
-          <input placeholder="Protein" type="number" value={customProt} onChange={e => setCustomProt(e.target.value)} />
+          <ul>{foodList.map((f, i) => <li key={i} onClick={() => handlePresetSelect(f)}>{f}</li>)}</ul>
+          <h4>Custom</h4>
+          <input value={customName} onChange={e => setCustomName(e.target.value)} placeholder="Food name" />
+          <input value={customCal} onChange={e => setCustomCal(e.target.value)} placeholder="Calories" />
+          <input value={customProt} onChange={e => setCustomProt(e.target.value)} placeholder="Protein" />
           <button onClick={addCustomFood}>Add Food</button>
-
-          <h4>Logged Foods Today</h4>
-          <ul>
-            {foodLog.map((item, idx) => (
-              <li key={idx}>
-                {item.name} — {item.cal} kcal / {item.prot}g protein
-                <button onClick={() => removeFood(idx)} style={{ marginLeft: 8, color: "red" }}>✖</button>
-              </li>
-            ))}
-          </ul>
+          <ul>{foodLog.map((f, i) => <li key={i}>{f.name}: {f.cal} cal / {f.prot}g <button onClick={() => removeFood(i)}>✖</button></li>)}</ul>
         </>
-      )}
-
-      {screen === "weight" && (
+      ) : (
         <>
-          <h3>Track Weight</h3>
-          <input placeholder="Today's weight" value={newWeight} onChange={e => setNewWeight(e.target.value)} />
+          <h3>Weight Log</h3>
+          <input value={newWeight} onChange={e => setNewWeight(e.target.value)} placeholder="Weight today" />
           <button onClick={addWeight}>Log</button>
-          <ul>
-            {weightLog.map((w, i) => (
-              <li key={i}>{w.date}: {w.weight} lb</li>
-            ))}
-          </ul>
+          {weightLog.length > 0 ? (
+            <div style={{ height: 300 }}><Line data={chartData} options={chartOptions} /></div>
+          ) : <p>No entries yet. Log to see progress!</p>}
+          <ul>{weightLog.map((w, i) => <li key={i}>{w.date}: {w.weight} lbs</li>)}</ul>
         </>
       )}
 
@@ -281,9 +289,9 @@ function App() {
         display: "flex", justifyContent: "space-around",
         background: "#fff", borderTop: "1px solid #ccc", height: 70
       }}>
-        <button style={{ flex: 1, fontSize: 24, border: "none", background: "none" }} onClick={() => setScreen("home")}>🏠 Home</button>
-        <button style={{ flex: 1, fontSize: 24, border: "none", background: "none" }} onClick={() => setScreen("food")}>🍽 Food</button>
-        <button style={{ flex: 1, fontSize: 24, border: "none", background: "none" }} onClick={() => setScreen("weight")}>⚖️ Weight</button>
+        <button style={{ flex: 1 }} onClick={() => setScreen("home")}>🏠 Home</button>
+        <button style={{ flex: 1 }} onClick={() => setScreen("food")}>🍽 Food</button>
+        <button style={{ flex: 1 }} onClick={() => setScreen("weight")}>⚖️ Weight</button>
       </div>
     </div>
   );
