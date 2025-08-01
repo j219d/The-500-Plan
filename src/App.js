@@ -266,6 +266,58 @@ function App() {
           <p>+{caloriesFromSteps} cal from steps</p>
         </>
       )}
+    
+      <div style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        display: "flex",
+        justifyContent: "space-around",
+        alignItems: "center",
+        background: "#fff",
+        borderTop: "1px solid #ccc",
+        height: 60,
+        boxShadow: "0 -1px 5px rgba(0,0,0,0.1)"
+      }}>
+        <button
+          style={{
+            flex: 1,
+            padding: 10,
+            fontSize: 16,
+            background: "none",
+            border: "none",
+            color: screen === "home" ? "#000" : "#777",
+            fontWeight: screen === "home" ? "bold" : "normal"
+          }}
+          onClick={() => setScreen("home")}
+        >🏠 Home</button>
+        <button
+          style={{
+            flex: 1,
+            padding: 10,
+            fontSize: 16,
+            background: "none",
+            border: "none",
+            color: screen === "food" ? "#000" : "#777",
+            fontWeight: screen === "food" ? "bold" : "normal"
+          }}
+          onClick={() => setScreen("food")}
+        >🍽 Food</button>
+        <button
+          style={{
+            flex: 1,
+            padding: 10,
+            fontSize: 16,
+            background: "none",
+            border: "none",
+            color: screen === "weight" ? "#000" : "#777",
+            fontWeight: screen === "weight" ? "bold" : "normal"
+          }}
+          onClick={() => setScreen("weight")}
+        >⚖️ Weight</button>
+      </div>
+
     </div>
   );
 }
