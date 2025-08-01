@@ -88,11 +88,40 @@ export const presetFoods = [
 function App() {
   const today = new Date().toISOString().split("T")[0];
   const [screen, setScreen] = useState("home");
+
+const [editing, setEditing] = useState(true);
+const [initialized, setInitialized] = useState(false);
+
+useEffect(() => {
+  const s = localStorage.getItem("sex");
+  const a = localStorage.getItem("age");
+  const h = localStorage.getItem("height");
+  const w = localStorage.getItem("weight");
+
+  if (s && a && h && w) {
+    setSex(s);
+    setAge(a);
+    setHeight(h);
+    setWeight(w);
+    setEditing(false);
+  }
+  const food = localStorage.getItem(`foodLog-${today}`);
+  const step = localStorage.getItem(`steps-${today}`);
+  const weights = localStorage.getItem("weightLog");
+  if (food) setFoodLog(JSON.parse(food));
+  if (step) setSteps(parseInt(step));
+  if (weights) setWeightLog(JSON.parse(weights));
+
+  setInitialized(true); // Done initializing
+}, []);
+
+if (!initialized) return null;
+
   const [sex, setSex] = useState("");
   const [age, setAge] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
-  const [editing, setEditing] = useState(true);
+  
 
   const [steps, setSteps] = useState(0);
   const [foodLog, setFoodLog] = useState([]);
