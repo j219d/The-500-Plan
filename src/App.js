@@ -75,6 +75,7 @@ export const presetFoods = [
   "Yogurt 0% - 117 kcal / 20g protein",
 ];
 
+
 function App() {
   const [screen, setScreen] = useState("home");
   const [sex, setSex] = useState(() => localStorage.getItem("sex") || "male");
@@ -172,9 +173,9 @@ function App() {
   }
 
   return (
-    <div style={{ padding: 24, paddingBottom: 80, maxWidth: 500, margin: "auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h2>The 500 Plan</h2>
+    <div style={{ padding: 24, paddingBottom: 100, maxWidth: 500, margin: "auto" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h2 style={{ margin: 0 }}>The 500 Plan</h2>
         <button onClick={() => setEditing(true)}>⚙️</button>
       </div>
 
@@ -239,11 +240,11 @@ function App() {
       <div style={{
         position: "fixed", bottom: 0, left: 0, right: 0,
         display: "flex", justifyContent: "space-around",
-        background: "#fff", borderTop: "1px solid #ccc"
+        background: "#fff", borderTop: "1px solid #ccc", height: 70
       }}>
-        <button style={{ flex: 1, padding: 16, fontSize: 18 }} onClick={() => setScreen("home")}>Home</button>
-        <button style={{ flex: 1, padding: 16, fontSize: 18 }} onClick={() => setScreen("food")}>Food</button>
-        <button style={{ flex: 1, padding: 16, fontSize: 18 }} onClick={() => setScreen("weight")}>Weight</button>
+        <button style={{ flex: 1, fontSize: 24, border: "none", background: "none" }} onClick={() => setScreen("home")}>🏠 Home</button>
+        <button style={{ flex: 1, fontSize: 24, border: "none", background: "none" }} onClick={() => setScreen("food")}>🍽 Food</button>
+        <button style={{ flex: 1, fontSize: 24, border: "none", background: "none" }} onClick={() => setScreen("weight")}>⚖️ Weight</button>
       </div>
     </div>
   );
