@@ -88,11 +88,17 @@ export const presetFoods = [
 function App() {
   const today = new Date().toISOString().split("T")[0];
   const [screen, setScreen] = useState("home");
-  const [sex, setSex] = useState("");
-  const [age, setAge] = useState("");
-  const [height, setHeight] = useState("");
-  const [weight, setWeight] = useState("");
-  const [editing, setEditing] = useState(true);
+  const [sex, setSex] = useState(() => localStorage.getItem("sex") || "");
+  const [age, setAge] = useState(() => localStorage.getItem("age") || "");
+  const [height, setHeight] = useState(() => localStorage.getItem("height") || "");
+  const [weight, setWeight] = useState(() => localStorage.getItem("weight") || "");
+  const [editing, setEditing] = useState(() => {
+  const s = localStorage.getItem("sex");
+  const a = localStorage.getItem("age");
+  const h = localStorage.getItem("height");
+  const w = localStorage.getItem("weight");
+  return !(s && a && h && w);
+});
 
   const [steps, setSteps] = useState(0);
   const [foodLog, setFoodLog] = useState([]);
