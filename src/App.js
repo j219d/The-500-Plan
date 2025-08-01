@@ -85,6 +85,7 @@ export const presetFoods = [
   "Yogurt 0% - 117 kcal / 20g protein",
 ];
 
+
 function App() {
   const today = new Date().toISOString().split("T")[0];
   const [screen, setScreen] = useState("home");
@@ -116,7 +117,7 @@ function App() {
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
 
-  const bmr = () => {
+  function bmr() {
     const h = parseInt(height), w = parseFloat(weight), a = parseInt(age);
     if (!h || !w || !a) return 1600;
     const heightCm = h * 2.54, weightKg = w * 0.453592;
@@ -125,7 +126,7 @@ function App() {
         ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
         : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
     );
-  };
+  }
 
   const calorieGoal = bmr() - 500 + caloriesFromSteps;
   const proteinGoal = Math.round(parseFloat(weight) * 0.8);
@@ -225,9 +226,14 @@ function App() {
   };
 
   const navBtnStyle = (active) => ({
-    flex: 1, padding: 10, fontSize: 16, background: "none", border: "none",
+    flex: 1,
+    padding: 10,
+    fontSize: 16,
+    background: "none",
+    border: "none",
     fontWeight: active ? "bold" : "normal",
-    filter: active ? "none" : "none", // force full-color emoji
+    color: "#000", // Always black text
+    filter: "none" // Emojis stay colored always
   });
 
   if (editing) {
