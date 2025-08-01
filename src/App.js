@@ -91,6 +91,11 @@ function App() {
 
   const [search, setSearch] = useState("");
   const [foodList, setFoodList] = useState([]);
+  const [foodLog, setFoodLog] = useState([]);
+
+  const [customName, setCustomName] = useState("");
+  const [customCal, setCustomCal] = useState("");
+  const [customProt, setCustomProt] = useState("");
 
   const caloriesFromSteps = Math.round(steps * 0.04);
 
@@ -126,8 +131,22 @@ function App() {
     const pro = parseFloat(prot.trim());
     setCalsToday(calsToday + cals);
     setProteinToday(proteinToday + pro);
+    setFoodLog([...foodLog, { name: namePart, cal: cals, prot: pro }]);
     setSearch("");
     setFoodList([]);
+  };
+
+  const addCustomFood = () => {
+    const cals = parseFloat(customCal);
+    const pro = parseFloat(customProt);
+    if (!isNaN(cals) && !isNaN(pro) && customName) {
+      setCalsToday(calsToday + cals);
+      setProteinToday(proteinToday + pro);
+      setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
+      setCustomName("");
+      setCustomCal("");
+      setCustomProt("");
+    }
   };
 
   const addWeight = () => {
@@ -188,6 +207,19 @@ function App() {
               ))}
             </ul>
           )}
+
+          <h4>Or Enter Manually</h4>
+          <input placeholder="Food name" value={customName} onChange={e => setCustomName(e.target.value)} />
+          <input placeholder="Calories" type="number" value={customCal} onChange={e => setCustomCal(e.target.value)} />
+          <input placeholder="Protein" type="number" value={customProt} onChange={e => setCustomProt(e.target.value)} />
+          <button onClick={addCustomFood}>Add Food</button>
+
+          <h4>Logged Foods Today</h4>
+          <ul>
+            {foodLog.map((item, idx) => (
+              <li key={idx}>{item.name} — {item.cal} kcal / {item.prot}g protein</li>
+            ))}
+          </ul>
         </>
       )}
 
