@@ -199,6 +199,7 @@ function App() {
     setSteps(0);
     localStorage.removeItem(`foodLog-${today}`);
     localStorage.removeItem(`steps-${today}`);
+    window.location.reload(); // ensures the calorieGoal refreshes properly
   };
 
   const ProgressBar = ({ value, goal, color, label }) => (
@@ -226,9 +227,14 @@ function App() {
   };
 
   const navBtnStyle = (active) => ({
-    flex: 1, padding: 10, fontSize: 16, background: "none", border: "none",
+    flex: 1,
+    padding: 10,
+    fontSize: 16,
+    background: "none",
+    border: "none",
     fontWeight: active ? "bold" : "normal",
-    filter: "none", color: "#000"
+    color: "#000",
+    fontFamily: "Apple Color Emoji,Segoe UI Emoji,NotoColorEmoji,sans-serif",
   });
 
   if (editing) {
