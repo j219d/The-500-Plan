@@ -17,6 +17,7 @@ const load = (k, fb) => {
 export default function App() {
   const [tab, setTab] = useState("home");
   const [profile, setProfile] = useState(() => load("tfp_profile", null));
+  const [editingProfile, setEditingProfile] = useState(false);
   const [entry, setEntry] = useState(() => load("tfp_" + todayKey(), {
     foods: [],
     steps: "",
@@ -45,7 +46,7 @@ export default function App() {
   const proteinPercent = Math.min(100, (proteinTotal / profile.proteinTarget) * 100);
   const calGood = calTotal <= calorieGoal;
 
-  const handleOnboard = (e) => {
+  const saveProfile = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const sex = fd.get("sex");
@@ -64,6 +65,7 @@ export default function App() {
     const p = { sex, age, weightLb, heightFt, heightIn, targetCals, proteinTarget };
     save("tfp_profile", p);
     setProfile(p);
+    setEditingProfile(false);
   };
 
   const addFood = (e) => {
@@ -73,19 +75,22 @@ export default function App() {
     setFood({ name: "", cals: "", protein: "" });
   };
 
-  if (!profile) {
+  if (!profile || editingProfile) {
     return (
       <div className="container">
-        <h2>Setup</h2>
-        <form onSubmit={handleOnboard}>
+        <h2>{!profile ? 'Setup' : 'Edit Profile'}</h2>
+        <form onSubmit={saveProfile}>
           <label>Sex:
-            <select name="sex"><option>male</option><option>female</option></select>
+            <select name="sex" defaultValue={profile?.sex || "male"}>
+              <option>male</option>
+              <option>female</option>
+            </select>
           </label><br />
-          <label>Age: <input name="age" required /></label><br />
-          <label>Weight (lb): <input name="weight" required /></label><br />
+          <label>Age: <input name="age" defaultValue={profile?.age || ""} required /></label><br />
+          <label>Weight (lb): <input name="weight" defaultValue={profile?.weightLb || ""} required /></label><br />
           <label>Height:
-            <input name="heightFt" placeholder="ft" required style={{ width: "3rem" }} />
-            <input name="heightIn" placeholder="in" required style={{ width: "3rem" }} />
+            <input name="heightFt" defaultValue={profile?.heightFt || ""} placeholder="ft" required style={{ width: "3rem" }} />
+            <input name="heightIn" defaultValue={profile?.heightIn || ""} placeholder="in" required style={{ width: "3rem" }} />
           </label><br />
           <button type="submit">Save</button>
         </form>
@@ -95,9 +100,18 @@ export default function App() {
 
   return (
     <div className="container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h2>The 500 Plan</h2>
+        <button onClick={() => setEditingProfile(true)} style={{
+          fontSize: '1.2rem',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer'
+        }}>⚙️</button>
+      </div>
+
       {tab === "home" && (
         <>
-          <h2>The 500 Plan</h2>
           <h3>Calories</h3>
           <div className="gauge-bg">
             <div className="gauge-fill" style={{ width: calPercent + "%", background: calGood ? "#4caf50" : "#f44336" }}></div>
