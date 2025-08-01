@@ -87,7 +87,7 @@ export const presetFoods = [
 
 
 function App() {
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toLocaleDateString("en-CA"); // Ensures YYYY-MM-DD
   const [screen, setScreen] = useState("home");
 
   const [sex, setSex] = useState(() => localStorage.getItem("sex") || "");
@@ -195,10 +195,10 @@ function App() {
   };
 
   const resetDay = () => {
-    setFoodLog([]);
-    setSteps(0);
     localStorage.removeItem(`foodLog-${today}`);
     localStorage.removeItem(`steps-${today}`);
+    setFoodLog([]);
+    setSteps(0);
   };
 
   const ProgressBar = ({ value, goal, color, label }) => (
@@ -232,8 +232,7 @@ function App() {
     background: "none",
     border: "none",
     fontWeight: active ? "bold" : "normal",
-    color: "#000", // Always black text
-    filter: "none" // Emojis stay colored always
+    color: "#000" // full color and emoji
   });
 
   if (editing) {
