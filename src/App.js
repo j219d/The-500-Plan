@@ -116,7 +116,7 @@ function App() {
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
 
-  function bmr() {
+  const bmr = () => {
     const h = parseInt(height), w = parseFloat(weight), a = parseInt(age);
     if (!h || !w || !a) return 1600;
     const heightCm = h * 2.54, weightKg = w * 0.453592;
@@ -125,7 +125,7 @@ function App() {
         ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
         : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
     );
-  }
+  };
 
   const calorieGoal = bmr() - 500 + caloriesFromSteps;
   const proteinGoal = Math.round(parseFloat(weight) * 0.8);
@@ -227,7 +227,7 @@ function App() {
   const navBtnStyle = (active) => ({
     flex: 1, padding: 10, fontSize: 16, background: "none", border: "none",
     fontWeight: active ? "bold" : "normal",
-    filter: active ? "none" : "grayscale(100%)",
+    filter: active ? "none" : "none", // force full-color emoji
   });
 
   if (editing) {
