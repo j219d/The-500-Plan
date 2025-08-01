@@ -1,5 +1,3 @@
-
-// The 500 Plan – Full MVP App (v1.1 with styled progress bars: Blue = Calories, Green = Protein)
 import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import {
@@ -89,21 +87,12 @@ export const presetFoods = [
 
 function App() {
   const today = new Date().toISOString().split("T")[0];
-
   const [screen, setScreen] = useState("home");
-  
-const initialEditing = !localStorage.getItem("sex") ||
-                       !localStorage.getItem("age") ||
-                       !localStorage.getItem("height") ||
-                       !localStorage.getItem("weight");
-
-const [editing, setEditing] = useState(initialEditing);
-
-
   const [sex, setSex] = useState("");
   const [age, setAge] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
+  const [editing, setEditing] = useState(true);
 
   const [steps, setSteps] = useState(0);
   const [foodLog, setFoodLog] = useState([]);
@@ -118,8 +107,10 @@ const [editing, setEditing] = useState(initialEditing);
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
+  const calorieGoal = bmr() - 500 + caloriesFromSteps;
+  const proteinGoal = Math.round(parseFloat(weight) * 0.8);
 
-  const bmr = () => {
+  function bmr() {
     const h = parseInt(height), w = parseFloat(weight), a = parseInt(age);
     if (!h || !w || !a) return 1600;
     const heightCm = h * 2.54, weightKg = w * 0.453592;
@@ -128,10 +119,7 @@ const [editing, setEditing] = useState(initialEditing);
         ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
         : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
     );
-  };
-
-  const calorieGoal = bmr() - 500 + caloriesFromSteps;
-  const proteinGoal = Math.round(parseFloat(weight) * 0.8);
+  }
 
   useEffect(() => {
     const s = localStorage.getItem("sex");
@@ -179,8 +167,7 @@ const [editing, setEditing] = useState(initialEditing);
     const cals = parseFloat(kcal.trim());
     const pro = parseFloat(prot.trim());
     setFoodLog([...foodLog, { name: namePart, cal: cals, prot: pro }]);
-    setSearch("");
-    setFoodList([]);
+    setSearch(""); setFoodList([]);
   };
 
   const addCustomFood = () => {
@@ -243,33 +230,14 @@ const [editing, setEditing] = useState(initialEditing);
       {screen === "home" && (
         <>
           <h3>Calories</h3>
-          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${Math.min((calsToday / calorieGoal) * 100, 100)}%`,
-                background: "#2196f3",
-                height: "100%",
-                transition: "width 0.3s ease",
-              }}
-            />
-          </div>
-          <p>{calsToday} / {calorieGoal} kcal</p>
+          <ProgressBar value={calsToday} goal={calorieGoal} color="#2196f3" label={`${calsToday} / ${calorieGoal} kcal`} />
 
           <h3>Protein</h3>
-          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${Math.min((proteinToday / proteinGoal) * 100, 100)}%`,
-                background: "#4caf50",
-                height: "100%",
-                transition: "width 0.3s ease",
-              }}
-            />
-          </div>
-          <p>{proteinToday} / {proteinGoal} g</p>
+          <ProgressBar value={proteinToday} goal={proteinGoal} color="#4caf50" label={`${proteinToday} / ${proteinGoal} g`} />
 
-          <h4>Steps</h4>
-          <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" />
+          <h3>Steps</h3>
+          <ProgressBar value={steps} goal={10000} color="#ff9800" />
+          <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" style={{ marginTop: 6 }} />
           <p>+{caloriesFromSteps} cal from steps</p>
         </>
       )}
@@ -320,39 +288,6 @@ const [editing, setEditing] = useState(initialEditing);
         </>
       )}
 
-        <>
-          <h3>Calories</h3>
-          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${Math.min((calsToday / calorieGoal) * 100, 100)}%`,
-                background: "#2196f3",
-                height: "100%",
-                transition: "width 0.3s ease",
-              }}
-            />
-          </div>
-          <p>{calsToday} / {calorieGoal} kcal</p>
-
-          <h3>Protein</h3>
-          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${Math.min((proteinToday / proteinGoal) * 100, 100)}%`,
-                background: "#4caf50",
-                height: "100%",
-                transition: "width 0.3s ease",
-              }}
-            />
-          </div>
-          <p>{proteinToday} / {proteinGoal} g</p>
-
-          <h4>Steps</h4>
-          <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" />
-          <p>+{caloriesFromSteps} cal from steps</p>
-        </>
-      )}
-    
       <div style={{
         position: "fixed",
         bottom: 0,
@@ -366,46 +301,38 @@ const [editing, setEditing] = useState(initialEditing);
         height: 60,
         boxShadow: "0 -1px 5px rgba(0,0,0,0.1)"
       }}>
-        <button
-          style={{
-            flex: 1,
-            padding: 10,
-            fontSize: 16,
-            background: "none",
-            border: "none",
-            color: screen === "home" ? "#000" : "#777",
-            fontWeight: screen === "home" ? "bold" : "normal"
-          }}
-          onClick={() => setScreen("home")}
-        >🏠 Home</button>
-        <button
-          style={{
-            flex: 1,
-            padding: 10,
-            fontSize: 16,
-            background: "none",
-            border: "none",
-            color: screen === "food" ? "#000" : "#777",
-            fontWeight: screen === "food" ? "bold" : "normal"
-          }}
-          onClick={() => setScreen("food")}
-        >🍽 Food</button>
-        <button
-          style={{
-            flex: 1,
-            padding: 10,
-            fontSize: 16,
-            background: "none",
-            border: "none",
-            color: screen === "weight" ? "#000" : "#777",
-            fontWeight: screen === "weight" ? "bold" : "normal"
-          }}
-          onClick={() => setScreen("weight")}
-        >⚖️ Weight</button>
+        <button style={navBtnStyle(screen === "home")} onClick={() => setScreen("home")}>🏠 Home</button>
+        <button style={navBtnStyle(screen === "food")} onClick={() => setScreen("food")}>🍽 Food</button>
+        <button style={navBtnStyle(screen === "weight")} onClick={() => setScreen("weight")}>⚖️ Weight</button>
       </div>
-
     </div>
   );
 }
+
+const ProgressBar = ({ value, goal, color, label }) => (
+  <>
+    <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
+      <div
+        style={{
+          width: `${Math.min((value / goal) * 100, 100)}%`,
+          background: color,
+          height: "100%",
+          transition: "width 0.3s ease",
+        }}
+      />
+    </div>
+    {label && <p>{label}</p>}
+  </>
+);
+
+const navBtnStyle = (active) => ({
+  flex: 1,
+  padding: 10,
+  fontSize: 16,
+  background: "none",
+  border: "none",
+  color: active ? "#000" : "#777",
+  fontWeight: active ? "bold" : "normal"
+});
 
 export default App;
