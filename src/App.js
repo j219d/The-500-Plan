@@ -97,15 +97,7 @@ const initialEditing = !localStorage.getItem("sex") ||
                        !localStorage.getItem("height") ||
                        !localStorage.getItem("weight");
 
-
-const [editing, setEditing] = useState(() => {
-  const s = localStorage.getItem("sex");
-  const a = localStorage.getItem("age");
-  const h = localStorage.getItem("height");
-  const w = localStorage.getItem("weight");
-  return !(s && a && h && w);
-});
-
+const [editing, setEditing] = useState(initialEditing);
 
 
   const [sex, setSex] = useState("");
@@ -276,26 +268,9 @@ const [editing, setEditing] = useState(() => {
           </div>
           <p>{proteinToday} / {proteinGoal} g</p>
 
-          
-          <h3>Steps</h3>
-          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${Math.min((steps / 10000) * 100, 100)}%`,
-                background: "#ff9800",
-                height: "100%",
-                transition: "width 0.3s ease",
-              }}
-            />
-          </div>
-          <input
-            value={steps}
-            onChange={e => setSteps(+e.target.value)}
-            placeholder="Steps today"
-            style={{ marginTop: 6 }}
-          />
+          <h4>Steps</h4>
+          <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" />
           <p>+{caloriesFromSteps} cal from steps</p>
-
         </>
       )}
 
@@ -372,26 +347,9 @@ const [editing, setEditing] = useState(() => {
           </div>
           <p>{proteinToday} / {proteinGoal} g</p>
 
-          
-          <h3>Steps</h3>
-          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${Math.min((steps / 10000) * 100, 100)}%`,
-                background: "#ff9800",
-                height: "100%",
-                transition: "width 0.3s ease",
-              }}
-            />
-          </div>
-          <input
-            value={steps}
-            onChange={e => setSteps(+e.target.value)}
-            placeholder="Steps today"
-            style={{ marginTop: 6 }}
-          />
+          <h4>Steps</h4>
+          <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" />
           <p>+{caloriesFromSteps} cal from steps</p>
-
         </>
       )}
     
