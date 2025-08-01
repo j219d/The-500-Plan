@@ -1,106 +1,88 @@
 import React, { useState, useEffect } from "react";
 
 /* ------------------------------------------------------------------
-  Ultra‑Lean Cal‑Deficit Tracker – v0.2
-  • Adds metric / imperial toggle at onboarding
-  • Stores unit preference in profile so weight fields display correctly
-  • Internally converts imperial → metric for BMR math (kg / cm)
+   Cal‑Deficit Tracker – v0.3
+   • Unit selector moved *after* weight input so users enter the number
+     first, then pick kg/lb (or cm/in) – as requested.
+   • Dynamic labels update on <select> change.
 -------------------------------------------------------------------*/
 
-// util helpers ----------------------------------------------------
-const todayKey = () => new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+// helpers ----------------------------------------------------------
+const todayKey = () => new Date().toISOString().split("T")[0];
 const lbToKg = (lb) => lb * 0.45359237;
 const inchToCm = (inch) => inch * 2.54;
 
 const saveJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-const loadJSON = (k, fallback) => {
-  try {
-    const raw = localStorage.getItem(k);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
+const loadJSON = (k, fb) => {
+  try { const raw = localStorage.getItem(k); return raw ? JSON.parse(raw) : fb; }
+  catch { return fb; }
 };
 
 export default function App() {
   /* ---------------- profile ---------------- */
   const [profile, setProfile] = useState(() => loadJSON("paw_profile", null));
 
-  /* ---------------- today entry ---------------- */
+  /* ---------------- today entry ------------- */
   const [entry, setEntry] = useState(() => loadJSON("paw_" + todayKey(), {
     foods: [],
     steps: "",
     weight: "",
   }));
 
-  /* -------------- temp food input -------------- */
+  /* ---------------- temp food --------------- */
   const [foodInput, setFoodInput] = useState({ name: "", cals: "", protein: "" });
 
-  /* -------------- onboarding submit -------------- */
+  /* ---------------- onboarding -------------- */
   const handleOnboard = (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
-
-    // unit preference
-    const units = fd.get("units"); // metric | imperial
-
-    // raw inputs depend on units ------------------------------------------------
+    const units = fd.get("units");
     const weightRaw = parseFloat(fd.get("weight"));
     const heightRaw = parseFloat(fd.get("height"));
     const sex = fd.get("sex");
     const age = parseInt(fd.get("age"), 10);
 
-    // convert to metric for calculations
     const weightKg = units === "imperial" ? lbToKg(weightRaw) : weightRaw;
     const heightCm = units === "imperial" ? inchToCm(heightRaw) : heightRaw;
 
-    // Mifflin‑St Jeor BMR -------------------------------------------------------
+    // Mifflin–St Jeor
     const bmr = sex === "male"
       ? 10 * weightKg + 6.25 * heightCm - 5 * age + 5
       : 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
 
-    const maintenance = bmr * 1.2;          // simple sedentary activity factor
-    const targetCals = maintenance - 500;   // daily –500 kcal deficit
-    const proteinTarget = weightKg * 1.6;   // g per kg BW
+    const maintenance = bmr * 1.2;
+    const targetCals = maintenance - 500;
+    const proteinTarget = weightKg * 1.6;
 
-    const p = {
-      sex, age, units,
-      weightStart: weightRaw,
-      height: heightRaw,
-      targetCals,
-      proteinTarget,
-    };
-
+    const p = { sex, age, units, weightStart: weightRaw, height: heightRaw, targetCals, proteinTarget };
     saveJSON("paw_profile", p);
     setProfile(p);
   };
 
-  /* ---------------- persist entry ---------------- */
-  useEffect(() => {
-    saveJSON("paw_" + todayKey(), entry);
-  }, [entry]);
+  /* ---------------- persist entry ----------- */
+  useEffect(() => { saveJSON("paw_" + todayKey(), entry); }, [entry]);
 
-  /* ---------------- derived totals --------------- */
+  /* ---------------- totals ------------------ */
   const totals = entry.foods.reduce((acc, f) => {
     acc.cals += Number(f.cals || 0);
     acc.protein += Number(f.protein || 0);
     return acc;
   }, { cals: 0, protein: 0 });
 
-  /* =================== UI ==================== */
+  /* ---------------- onboarding UI ----------- */
   if (!profile) {
+    // small helper to sync label text
+    const setLabels = (unit) => {
+      document.getElementById("wt-unit").textContent = unit === "imperial" ? "lb" : "kg";
+      document.getElementById("ht-unit").textContent = unit === "imperial" ? "in" : "cm";
+    };
+
     return (
       <div style={styles.container}>
-        <h2>Quick Setup</h2>
+        <h2 style={{marginTop:0}}>Quick Setup</h2>
         <form onSubmit={handleOnboard} style={styles.form}>
 
-          <label>Units:
-            <select name="units" defaultValue="metric" style={styles.input}>
-              <option value="metric">kg / cm</option>
-              <option value="imperial">lb / in</option>
-            </select>
-          </label>
-
+          {/* sex first (unchanged) */}
           <label>Sex:
             <select name="sex" defaultValue="male" style={styles.input}>
               <option value="male">Male</option>
@@ -108,26 +90,38 @@ export default function App() {
             </select>
           </label>
 
+          {/* weight input first */}
           <label>Weight (<span id="wt-unit">kg</span>):
-            <input name="weight" type="number" step="0.1" required style={styles.input}
-              onInput={(e)=>{
-                const unit = e.target.form.units.value;
-                document.getElementById("wt-unit").textContent = unit === "imperial" ? "lb" : "kg";
-              }}
+            <input
+              name="weight" type="number" step="0.1" required style={styles.input}
+              placeholder="e.g. 70"
             />
           </label>
 
+          {/* unit selector comes next */}
+          <label>Units:
+            <select
+              name="units"
+              defaultValue="metric"
+              style={styles.input}
+              onChange={(e) => setLabels(e.target.value)}
+            >
+              <option value="metric">kg / cm</option>
+              <option value="imperial">lb / in</option>
+            </select>
+          </label>
+
+          {/* height */}
           <label>Height (<span id="ht-unit">cm</span>):
-            <input name="height" type="number" step="0.1" required style={styles.input}
-              onInput={(e)=>{
-                const unit = e.target.form.units.value;
-                document.getElementById("ht-unit").textContent = unit === "imperial" ? "in" : "cm";
-              }}
+            <input
+              name="height" type="number" step="0.1" required style={styles.input}
+              placeholder="e.g. 170"
             />
           </label>
 
+          {/* age */}
           <label>Age:
-            <input name="age" type="number" required style={styles.input}/>
+            <input name="age" type="number" required style={styles.input} placeholder="e.g. 30" />
           </label>
 
           <button style={styles.button}>Save & Continue</button>
@@ -136,26 +130,22 @@ export default function App() {
     );
   }
 
-  // ---- unit‑aware labels ----
-  const wtLabel = profile.units === "imperial" ? "lbs" : "kg";
-
-  // ---- progress gauges ----
+  /* ---------------- dashboard UI ----------- */
   const calPercent = Math.min(100, (totals.cals / profile.targetCals) * 100);
   const proteinPercent = Math.min(100, (totals.protein / profile.proteinTarget) * 100);
   const calGood = totals.cals <= profile.targetCals;
+  const wtLabel = profile.units === "imperial" ? "lbs" : "kg";
 
-  // ---- food add ----
   const addFood = (e) => {
     e.preventDefault();
-    const { name, cals, protein } = foodInput;
-    if (!name || !cals) return;
-    setEntry({ ...entry, foods: [...entry.foods, { name, cals, protein }] });
+    if (!foodInput.name || !foodInput.cals) return;
+    setEntry({ ...entry, foods: [...entry.foods, { ...foodInput }] });
     setFoodInput({ name: "", cals: "", protein: "" });
   };
 
   return (
     <div style={styles.container}>
-      <h2 style={{marginTop:0}}>🟢 Cal‑Cut</h2>
+      <h2 style={{marginTop:0}}>The 500 Plan</h2>
 
       {/* calorie gauge */}
       <section>
@@ -200,18 +190,9 @@ export default function App() {
 
 /* ---------------- styles ---------------- */
 const styles = {
-  container: {
-    maxWidth: 480,
-    margin: "0 auto",
-    padding: "1rem",
-    fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
-  },
+  container: { maxWidth: 480, margin: "0 auto", padding: "1rem", fontFamily: "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Helvetica Neue,sans-serif" },
   form: { display: "flex", flexDirection: "column", gap: ".5rem" },
   input: { fontSize: "1rem", padding: "0.5rem" },
   button: { marginTop: ".5rem", padding: "0.5rem", fontSize: "1rem", cursor: "pointer" },
   h3: { marginBottom: ".25rem" },
-  gaugeBg: { width: "100%", height: 20, background: "#ddd", borderRadius: 10, overflow: "hidden", marginBottom: ".25rem" },
-  gaugeFill: { height: "100%", transition: "width .3s ease" },
-  section: { marginTop: "1rem", borderTop: "1px solid #e0e0e0", paddingTop: ".5rem" },
-  foodItem: { display: "flex", justifyContent: "space-between", padding: ".25rem 0", borderBottom: "1px dotted #ccc", fontSize: "0.9rem" },
-};
+  gaugeBg: { width: "100%", height: 20, background: "#ddd", borderRadius: 10, overflow: "hidden", marginBottom
