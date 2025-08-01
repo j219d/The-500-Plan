@@ -93,38 +93,29 @@ const [editing, setEditing] = useState(true);
 const [initialized, setInitialized] = useState(false);
 
 useEffect(() => {
-  try {
-    const s = localStorage.getItem("sex");
-    const a = localStorage.getItem("age");
-    const h = localStorage.getItem("height");
-    const w = localStorage.getItem("weight");
+  const s = localStorage.getItem("sex");
+  const a = localStorage.getItem("age");
+  const h = localStorage.getItem("height");
+  const w = localStorage.getItem("weight");
 
-    if (s && a && h && w) {
-      setSex(s);
-      setAge(a);
-      setHeight(h);
-      setWeight(w);
-      setEditing(false);
-    } else {
-      setEditing(true);
-    }
-
-    const food = localStorage.getItem(`foodLog-${today}`);
-    const step = localStorage.getItem(`steps-${today}`);
-    const weights = localStorage.getItem("weightLog");
-
-    if (food) setFoodLog(JSON.parse(food));
-    if (step) setSteps(parseInt(step));
-    if (weights) setWeightLog(JSON.parse(weights));
-  } catch (err) {
-    console.warn("LocalStorage unavailable or corrupt. Resetting onboarding.");
-    setEditing(true);
-  } finally {
-    setInitialized(true); // Ensure we continue either way
+  if (s && a && h && w) {
+    setSex(s);
+    setAge(a);
+    setHeight(h);
+    setWeight(w);
+    setEditing(false);
   }
+  const food = localStorage.getItem(`foodLog-${today}`);
+  const step = localStorage.getItem(`steps-${today}`);
+  const weights = localStorage.getItem("weightLog");
+  if (food) setFoodLog(JSON.parse(food));
+  if (step) setSteps(parseInt(step));
+  if (weights) setWeightLog(JSON.parse(weights));
+
+  setInitialized(true); // Done initializing
 }, []);
 
-if (!initialized) return <div style={{ padding: 20 }}>Loading...</div>;
+if (!initialized) return null;
 
   const [sex, setSex] = useState("");
   const [age, setAge] = useState("");
