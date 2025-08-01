@@ -1,8 +1,16 @@
+
+// The 500 Plan – Full MVP App (v1.1 with styled progress bars: Blue = Calories, Green = Protein)
 import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
-import { Chart as ChartJS, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from "chart.js";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+} from "chart.js";
 
-ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
 
 export const presetFoods = [
   "Almond Milk (1/4 cup) - 23 kcal / 0.9g protein",
@@ -81,39 +89,33 @@ export const presetFoods = [
 
 function App() {
   const today = new Date().toISOString().split("T")[0];
+
   const [screen, setScreen] = useState("home");
-  const [sex, setSex] = useState(localStorage.getItem("sex") || "");
-  const [age, setAge] = useState(localStorage.getItem("age") || "");
-  const [height, setHeight] = useState(localStorage.getItem("height") || "");
-  const [weight, setWeight] = useState(localStorage.getItem("weight") || "");
-  const [editing, setEditing] = useState(!sex || !age || !height || !weight);
+  const [editing, setEditing] = useState(true);
 
-  const [steps, setSteps] = useState(() => parseInt(localStorage.getItem(`steps-${today}`)) || 0);
-  const [foodLog, setFoodLog] = useState(() => {
-    const saved = localStorage.getItem(`foodLog-${today}`);
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [weightLog, setWeightLog] = useState(() => {
-    const saved = localStorage.getItem("weightLog");
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [newWeight, setNewWeight] = useState("");
+  const [sex, setSex] = useState("");
+  const [age, setAge] = useState("");
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
 
+  const [steps, setSteps] = useState(0);
+  const [foodLog, setFoodLog] = useState([]);
+  const [weightLog, setWeightLog] = useState([]);
   const [search, setSearch] = useState("");
   const [foodList, setFoodList] = useState([]);
-  const [justAddedName, setJustAddedName] = useState("");
+  const [customName, setCustomName] = useState("");
+  const [customCal, setCustomCal] = useState("");
+  const [customProt, setCustomProt] = useState("");
+  const [newWeight, setNewWeight] = useState("");
 
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
 
   const bmr = () => {
-    const h = parseInt(height);
-    const w = parseFloat(weight);
-    const a = parseInt(age);
+    const h = parseInt(height), w = parseFloat(weight), a = parseInt(age);
     if (!h || !w || !a) return 1600;
-    const heightCm = h * 2.54;
-    const weightKg = w * 0.453592;
+    const heightCm = h * 2.54, weightKg = w * 0.453592;
     return Math.round(
       sex === "male"
         ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
@@ -123,6 +125,23 @@ function App() {
 
   const calorieGoal = bmr() - 500 + caloriesFromSteps;
   const proteinGoal = Math.round(parseFloat(weight) * 0.8);
+
+  useEffect(() => {
+    const s = localStorage.getItem("sex");
+    const a = localStorage.getItem("age");
+    const h = localStorage.getItem("height");
+    const w = localStorage.getItem("weight");
+    if (s && a && h && w) {
+      setSex(s); setAge(a); setHeight(h); setWeight(w);
+      setEditing(false);
+    }
+    const food = localStorage.getItem(`foodLog-${today}`);
+    const step = localStorage.getItem(`steps-${today}`);
+    const weights = localStorage.getItem("weightLog");
+    if (food) setFoodLog(JSON.parse(food));
+    if (step) setSteps(parseInt(step));
+    if (weights) setWeightLog(JSON.parse(weights));
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("sex", sex);
@@ -153,10 +172,17 @@ function App() {
     const cals = parseFloat(kcal.trim());
     const pro = parseFloat(prot.trim());
     setFoodLog([...foodLog, { name: namePart, cal: cals, prot: pro }]);
-    setJustAddedName(namePart);
     setSearch("");
     setFoodList([]);
-    setTimeout(() => setJustAddedName(""), 1000);
+  };
+
+  const addCustomFood = () => {
+    const cals = parseFloat(customCal);
+    const pro = parseFloat(customProt);
+    if (!isNaN(cals) && !isNaN(pro) && customName) {
+      setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
+      setCustomName(""); setCustomCal(""); setCustomProt("");
+    }
   };
 
   const removeFood = (indexToRemove) => {
@@ -175,118 +201,71 @@ function App() {
     }
   };
 
-  const recentWeights = weightLog.slice(-14);
-  const dates = recentWeights.map(entry => entry.date);
-  const weights = recentWeights.map(entry => entry.weight);
-  const average = weights.length ? (weights.reduce((a, b) => a + b, 0) / weights.length).toFixed(1) : null;
-
-  const chartData = {
-    labels: dates,
-    datasets: [
-      {
-        label: "Weight (lbs)",
-        data: weights,
-        borderColor: "#3e95cd",
-        backgroundColor: "rgba(62,149,205,0.2)",
-        fill: true,
-        tension: 0.3,
-        pointRadius: 4
-      },
-      {
-        label: "7-Day Avg",
-        data: weights.map(() => average),
-        borderColor: "#90ee90",
-        borderDash: [5, 5],
-        pointRadius: 0,
-        fill: false
-      }
-    ]
+  const graphData = {
+    labels: weightLog.map(w => w.date),
+    datasets: [{
+      label: "Weight (lbs)",
+      data: weightLog.map(w => w.weight),
+      fill: false,
+      borderColor: "blue",
+      tension: 0.1,
+    }],
   };
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: true },
-      tooltip: { enabled: false }
-    }
-  };
+  if (editing) {
+    return (
+      <div style={{ padding: 24 }}>
+        <h2>The 500 Plan</h2>
+        <p>Track food. Hit your goals. Lose a pound a week.</p>
+        <label>Sex: <select value={sex} onChange={e => setSex(e.target.value)}><option>male</option><option>female</option></select></label><br />
+        <label>Age: <input value={age} onChange={e => setAge(e.target.value)} /></label><br />
+        <label>Height (inches): <input value={height} onChange={e => setHeight(e.target.value)} /></label><br />
+        <label>Weight (lbs): <input value={weight} onChange={e => setWeight(e.target.value)} /></label><br />
+        <button onClick={() => setEditing(false)}>Save & Start</button>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: 24, paddingBottom: 100, maxWidth: 500, margin: "auto", fontFamily: "sans-serif" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div style={{ padding: 24, paddingBottom: 80, maxWidth: 500, margin: "auto", fontFamily: "sans-serif" }}>
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2 style={{ margin: 0 }}>The 500 Plan</h2>
         <button onClick={() => setEditing(true)}>⚙️</button>
       </div>
 
-      {editing ? (
-        <>
-          <label>Sex: <select value={sex} onChange={e => setSex(e.target.value)}><option>male</option><option>female</option></select></label><br />
-          <label>Age: <input value={age} onChange={e => setAge(e.target.value)} /></label><br />
-          <label>Height (inches): <input value={height} onChange={e => setHeight(e.target.value)} /></label><br />
-          <label>Weight (lbs): <input value={weight} onChange={e => setWeight(e.target.value)} /></label><br />
-          <button onClick={() => setEditing(false)}>Save</button>
-        </>
-      ) : screen === "home" ? (
+      {screen === "home" && (
         <>
           <h3>Calories</h3>
-          <progress max={calorieGoal} value={calsToday} style={{ width: "100%" }} />
+          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
+            <div
+              style={{
+                width: `${Math.min((calsToday / calorieGoal) * 100, 100)}%`,
+                background: "#2196f3",
+                height: "100%",
+                transition: "width 0.3s ease",
+              }}
+            />
+          </div>
           <p>{calsToday} / {calorieGoal} kcal</p>
+
           <h3>Protein</h3>
-          <progress max={proteinGoal} value={proteinToday} style={{ width: "100%" }} />
+          <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
+            <div
+              style={{
+                width: `${Math.min((proteinToday / proteinGoal) * 100, 100)}%`,
+                background: "#4caf50",
+                height: "100%",
+                transition: "width 0.3s ease",
+              }}
+            />
+          </div>
           <p>{proteinToday} / {proteinGoal} g</p>
+
           <h4>Steps</h4>
           <input value={steps} onChange={e => setSteps(+e.target.value)} placeholder="Steps today" />
           <p>+{caloriesFromSteps} cal from steps</p>
         </>
-      ) : screen === "food" ? (
-        <>
-          <h3>Food Search</h3>
-          <input placeholder="Search food..." value={search} onChange={e => setSearch(e.target.value)} />
-          {foodList.map((f, idx) => (
-            <button
-              key={idx}
-              onClick={() => handlePresetSelect(f)}
-              style={{
-                display: "block",
-                width: "100%",
-                padding: 10,
-                marginBottom: 6,
-                backgroundColor: justAddedName && f.includes(justAddedName) ? "#d4edda" : "#f0f0f0",
-                border: "1px solid #ccc",
-                borderRadius: 6,
-                cursor: "pointer",
-                textAlign: "left"
-              }}
-            >
-              {f}
-            </button>
-          ))}
-
-          <h4>Logged Today</h4>
-          <ul>{foodLog.map((f, i) => <li key={i}>{f.name}: {f.cal} cal / {f.prot}g <button onClick={() => removeFood(i)}>✖</button></li>)}</ul>
-        </>
-      ) : (
-        <>
-          <h3>Weight Log</h3>
-          <input value={newWeight} onChange={e => setNewWeight(e.target.value)} placeholder="Weight today" />
-          <button onClick={addWeight}>Log</button>
-          {weightLog.length > 0 ? (
-            <div style={{ height: 300 }}><Line data={chartData} options={chartOptions} /></div>
-          ) : <p>No entries yet. Log to see progress!</p>}
-          <ul>{weightLog.map((w, i) => <li key={i}>{w.date}: {w.weight} lbs</li>)}</ul>
-        </>
       )}
-
-      <div style={{
-        position: "fixed", bottom: 0, left: 0, right: 0,
-        display: "flex", justifyContent: "space-around",
-        background: "#fff", borderTop: "1px solid #ccc", height: 70
-      }}>
-        <button style={{ flex: 1 }} onClick={() => setScreen("home")}>🏠 Home</button>
-        <button style={{ flex: 1 }} onClick={() => setScreen("food")}>🍽 Food</button>
-        <button style={{ flex: 1 }} onClick={() => setScreen("weight")}>⚖️ Weight</button>
-      </div>
     </div>
   );
 }
