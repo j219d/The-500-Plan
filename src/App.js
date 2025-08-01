@@ -93,9 +93,7 @@ function App() {
   const [age, setAge] = useState(() => localStorage.getItem("age") || "");
   const [height, setHeight] = useState(() => localStorage.getItem("height") || "");
   const [weight, setWeight] = useState(() => localStorage.getItem("weight") || "");
-  const [editing, setEditing] = useState(() => {
-    return !(sex && age && height && weight);
-  });
+  const [editing, setEditing] = useState(() => !(sex && age && height && weight));
 
   const [steps, setSteps] = useState(() => parseInt(localStorage.getItem(`steps-${today}`)) || 0);
   const [foodLog, setFoodLog] = useState(() => {
@@ -114,16 +112,9 @@ function App() {
   const [customProt, setCustomProt] = useState("");
   const [newWeight, setNewWeight] = useState("");
 
-  const [locked, setLocked] = useState(() => {
-    const saved = localStorage.getItem(`locked-${today}`);
-    return saved === "true";
-  });
-
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
-  const calorieGoal = bmr() - 500 + caloriesFromSteps;
-  const proteinGoal = Math.round(parseFloat(weight) * 0.8);
 
   function bmr() {
     const h = parseInt(height), w = parseFloat(weight), a = parseInt(age);
@@ -135,6 +126,9 @@ function App() {
         : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
     );
   }
+
+  const calorieGoal = bmr() - 500 + caloriesFromSteps;
+  const proteinGoal = Math.round(parseFloat(weight) * 0.8);
 
   useEffect(() => {
     localStorage.setItem("sex", sex);
@@ -152,10 +146,6 @@ function App() {
   }, [steps]);
 
   useEffect(() => {
-    localStorage.setItem(`locked-${today}`, locked.toString());
-  }, [locked]);
-
-  useEffect(() => {
     const results = presetFoods.filter(f => {
       const name = f.split(" - ")[0].toLowerCase();
       return name.startsWith(search.toLowerCase()) || name.includes(" " + search.toLowerCase());
@@ -164,21 +154,24 @@ function App() {
   }, [search]);
 
   const handlePresetSelect = (food) => {
-    if (locked) return;
     const [namePart, values] = food.split(" - ");
     const [kcal, prot] = values.replace(/kcal|protein/g, "").split("/");
     const cals = parseFloat(kcal.trim());
     const pro = parseFloat(prot.trim());
     setFoodLog([...foodLog, { name: namePart, cal: cals, prot: pro }]);
-    setSearch(""); setFoodList([]);
+    setSearch("");
+    setFoodList([]);
   };
 
   const addCustomFood = () => {
-    if (locked) return;
     const cals = parseFloat(customCal);
     const pro = parseFloat(customProt);
     if (!customName || isNaN(cals) || isNaN(pro)) {
-      alert("Please enter a valid name, calorie, and protein value.");
+      alert("Please fill in name, calories, and protein with valid numbers.");
+      return;
+    }
+    if (pro > 1000) {
+      alert("Protein value seems too high.");
       return;
     }
     setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
@@ -186,7 +179,6 @@ function App() {
   };
 
   const removeFood = (indexToRemove) => {
-    if (locked) return;
     const updated = foodLog.filter((_, idx) => idx !== indexToRemove);
     setFoodLog(updated);
   };
@@ -200,6 +192,13 @@ function App() {
       localStorage.setItem("weightLog", JSON.stringify(updated));
       setNewWeight("");
     }
+  };
+
+  const resetDay = () => {
+    setFoodLog([]);
+    setSteps(0);
+    localStorage.removeItem(`foodLog-${today}`);
+    localStorage.removeItem(`steps-${today}`);
   };
 
   const ProgressBar = ({ value, goal, color, label }) => (
@@ -235,8 +234,8 @@ function App() {
     fontSize: 16,
     background: "none",
     border: "none",
-    color: active ? "#000" : "#777",
-    fontWeight: active ? "bold" : "normal"
+    fontWeight: active ? "bold" : "normal",
+    color: "#000",
   });
 
   if (editing) {
@@ -268,10 +267,14 @@ function App() {
           <ProgressBar value={proteinToday} goal={proteinGoal} color="#4caf50" label={`${proteinToday} / ${proteinGoal} g`} />
           <h3>Steps</h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
-          <input value={steps} onChange={e => setSteps(Math.max(0, +e.target.value))} />
+          <input
+            value={steps}
+            onChange={e => setSteps(Math.max(0, +e.target.value))}
+            placeholder="Steps today"
+          />
           <p>+{caloriesFromSteps} cal from steps</p>
-          <button onClick={() => setLocked(true)} disabled={locked} style={{ marginTop: 10, background: "#000", color: "#fff", padding: 10, borderRadius: 5 }}>
-            {locked ? "✅ Day Locked" : "Lock in my day"}
+          <button onClick={resetDay} style={{ marginTop: 10, background: "#000", color: "#fff", padding: 10, borderRadius: 5 }}>
+            Reset Day
           </button>
         </>
       )}
@@ -321,21 +324,15 @@ function App() {
       )}
 
       <div style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        display: "flex",
-        justifyContent: "space-around",
-        alignItems: "center",
-        background: "#fff",
-        borderTop: "1px solid #ccc",
-        height: 60,
+        position: "fixed", bottom: 0, left: 0, right: 0,
+        display: "flex", justifyContent: "space-around",
+        alignItems: "center", background: "#fff",
+        borderTop: "1px solid #ccc", height: 60,
         boxShadow: "0 -1px 5px rgba(0,0,0,0.1)"
       }}>
-        <button style={{ ...navBtnStyle(screen === "home"), backgroundColor: screen === "home" ? "#cce7ff" : "none" }} onClick={() => setScreen("home")}>🏠 Home</button>
-        <button style={{ ...navBtnStyle(screen === "food"), backgroundColor: screen === "food" ? "#e0ffe0" : "none" }} onClick={() => setScreen("food")}>🍽 Food</button>
-        <button style={{ ...navBtnStyle(screen === "weight"), backgroundColor: screen === "weight" ? "#e0e0ff" : "none" }} onClick={() => setScreen("weight")}>⚖️ Weight</button>
+        <button style={navBtnStyle(screen === "home")} onClick={() => setScreen("home")}>🏠 Home</button>
+        <button style={navBtnStyle(screen === "food")} onClick={() => setScreen("food")}>🍽 Food</button>
+        <button style={navBtnStyle(screen === "weight")} onClick={() => setScreen("weight")}>⚖️ Weight</button>
       </div>
     </div>
   );
