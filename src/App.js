@@ -207,7 +207,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
           placeholder="Amount"
           style={{ width: 80 }}
           value={value}
-          onChange={(e) => setValue(e.target.value)}
+          onChange={(e) => setValue(Math.max(0, +e.target.value))}
         />
 
         <button onClick={handleAdd}>Add</button>
@@ -496,13 +496,13 @@ export default function App() {
             placeholder="Calories"
             type="number"
             value={customCal}
-            onChange={(e) => setCustomCal(e.target.value)}
+            onChange={(e) => setCustomCal(Math.max(0, +e.target.value))}
           />
           <input
             placeholder="Protein"
             type="number"
             value={customProt}
-            onChange={(e) => setCustomProt(e.target.value)}
+            onChange={(e) => setCustomCal(Math.max(0, +e.target.value))}
           />
           <button onClick={addCustomFood}>Add</button>
 
