@@ -85,6 +85,23 @@ export const presetFoods = [
   "Yogurt 0% - 117 kcal / 20g protein",
 ];
 
+// Simple reusable info button
+const InfoButton = ({ message }) => (
+  <span
+    onClick={() => alert(message)}
+    style={{
+      marginLeft: 6,
+      cursor: "pointer",
+      color: "#0070f3",
+      fontWeight: "bold",
+      userSelect: "none"
+    }}
+    title="More info"
+  >
+    ⓘ
+  </span>
+);
+
 function App() {
   // ── LOCAL DATE ───────────────────────────────────────────────────────────
   const today = (() => {
@@ -174,7 +191,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem(`steps-${today}`, steps.toString());
   }, [steps]);
-  // ← NEW: persist weightLog on every change
   useEffect(() => {
     localStorage.setItem("weightLog", JSON.stringify(weightLog));
   }, [weightLog]);
@@ -195,18 +211,13 @@ function App() {
 
   const handlePresetSelect = (food) => {
     const [namePart, values] = food.split(" - ");
-    // extract with regex to avoid NaN
     const m = values.match(/([\d.]+)\s*kcal\s*\/\s*([\d.]+)/);
-    let cals = 0,
-      pro = 0;
+    let cals = 0, pro = 0;
     if (m) {
       cals = parseFloat(m[1]);
       pro = parseFloat(m[2]);
     }
-    setFoodLog((f) => [
-      ...f,
-      { name: namePart, cal: cals, prot: pro },
-    ]);
+    setFoodLog((f) => [...f, { name: namePart, cal: cals, prot: pro }]);
     setSearch("");
     setFoodList([]);
   };
@@ -278,14 +289,7 @@ function App() {
   // ── UI COMPONENTS ───────────────────────────────────────────────────────
   const ProgressBar = ({ value, goal, color, label }) => (
     <>
-      <div
-        style={{
-          height: 20,
-          background: "#eee",
-          borderRadius: 10,
-          overflow: "hidden",
-        }}
-      >
+      <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
         <div
           style={{
             width: `${Math.min((value / goal) * 100, 100)}%`,
@@ -342,10 +346,7 @@ function App() {
         <br />
         <label>
           Height (inches):{" "}
-          <input
-            value={height}
-            onChange={(e) => setHeight(e.target.value)}
-          />
+          <input value={height} onChange={(e) => setHeight(e.target.value)} />
         </label>
         <br />
         <label>
@@ -383,21 +384,44 @@ function App() {
 
       {screen === "home" && (
         <>
-          <h3>Calories</h3>
+          <h3>
+            Calories
+            <InfoButton
+              message={
+                "Your BMR (Basal Metabolic Rate) is the calories you'd burn at rest all day. We subtract 500 kcal from your BMR plus any calories from steps to help you lose about 1 lb/week."
+              }
+            />
+          </h3>
           <ProgressBar
             value={calsToday}
             goal={calorieGoal}
             color="#2196f3"
             label={`${calsToday} / ${calorieGoal} kcal`}
           />
-          <h3>Protein</h3>
+
+          <h3>
+            Protein
+            <InfoButton
+              message={
+                "Protein helps maintain and build muscle while losing weight. We target 0.8 g per lb of body weight and recommend resistance training on The 500 Plan."
+              }
+            />
+          </h3>
           <ProgressBar
             value={proteinToday}
             goal={proteinGoal}
             color="#4caf50"
             label={`${proteinToday} / ${proteinGoal} g`}
           />
-          <h3>Steps</h3>
+
+          <h3>
+            Steps
+            <InfoButton
+              message={
+                "Walking burns calories without draining energy. Aim for 10 000 steps daily to boost your deficit and make weight loss more attainable."
+              }
+            />
+          </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
             value={steps}
