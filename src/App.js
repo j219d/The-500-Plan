@@ -450,9 +450,21 @@ export default function App() {
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
-            value={steps}
-            onChange={(e) => setSteps(Math.max(0, +e.target.value))}
-          />
+      type="text"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      placeholder="0"
+      value={steps === 0 ? "" : steps.toString()}
+      onChange={(e) => {
+      const raw = e.target.value;
+      // allow only digits
+      if (/^\d*$/.test(raw)) {
+      // empty → zero, otherwise parse int
+      setSteps(raw === "" ? 0 : parseInt(raw, 10));
+      }
+      }}
+      style={{ width: 80 }}
+      />
           <p>+{caloriesFromSteps} cal from steps</p>
           <button
             onClick={resetDay}
