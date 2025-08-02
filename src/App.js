@@ -163,7 +163,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
       <h4>
         Log Food
         <InfoButton
-          message="Search for a food, select it above, choose Count/Weight/Volume and enter the amount, then Add."
+          message="Quickly log everything you eat—search or select a food, choose count, weight, or volume, enter the amount, and hit Add. Consistent logging helps you stay on track with your daily calorie and protein goals."
         />
       </h4>
       <input
@@ -426,7 +426,7 @@ export default function App() {
       {screen === "home" && (
         <>
           <h3>
-            Calories<InfoButton message="Your BMR minus 500 kcal + steps" />
+            Calories<InfoButton message="Your BMR (Basal Metabolic Rate) is the number of calories your body burns at rest—basically, what you’d burn if you spent all day in bed. We subtract 500 kcal from your BMR to create a safe, sustainable daily deficit that leads to about one pound of fat loss per week." />
           </h3>
           <ProgressBar
             value={calsToday}
@@ -436,7 +436,7 @@ export default function App() {
           />
 
           <h3>
-            Protein<InfoButton message="0.8 g per lb bodyweight" />
+            Protein<InfoButton message="Protein is the building block for muscles, organs, and even your skin and hair. When you’re in a calorie deficit, getting enough protein helps preserve lean muscle mass and keeps you feeling full. We recommend resistance training alongside the 500 Plan so that the calories you do eat go toward maintaining and building muscle." />
           </h3>
           <ProgressBar
             value={proteinToday}
@@ -446,7 +446,7 @@ export default function App() {
           />
 
           <h3>
-            Steps<InfoButton message="0.04 kcal per step" />
+            Steps<InfoButton message="Walking is one of the easiest ways to burn extra calories without draining your energy. A target of 10,000 steps adds roughly 300–500 cal of burn per day—making your overall deficit that much more attainable and giving your metabolism a gentle boost." />
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
