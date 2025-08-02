@@ -52,6 +52,7 @@ const ProgressBar = ({ value, goal, color, label }) => (
   </>
 );
 
+// ── Bottom nav button style ──────────────────────────────────────────────
 const navBtnStyle = (active) => ({
   flex: 1,
   padding: 10,
@@ -62,7 +63,7 @@ const navBtnStyle = (active) => ({
   cursor: "pointer",
 });
 
-// ── Unified FoodLogger component ────────────────────────────────────────
+// ── Predefined foods & units ─────────────────────────────────────────────
 const countFoods = [
   { name: "Apple", cal: 95, prot: 1 },
   { name: "Banana", cal: 105, prot: 1.3 },
@@ -96,6 +97,7 @@ const volumeUnits = [
   { label: "Tsp", factor: 1 / 48 },
 ];
 
+// ── Unified Inline FoodLogger ────────────────────────────────────────────
 function FoodLogger({ foodLog, setFoodLog }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [measurementType, setMeasurementType] = useState("count");
@@ -103,15 +105,25 @@ function FoodLogger({ foodLog, setFoodLog }) {
   const [value, setValue] = useState("");
   const [selectedFood, setSelectedFood] = useState(null);
 
+  // pick correct list
   const options =
     measurementType === "count"
       ? countFoods
       : measurementType === "weight"
       ? weightFoods
       : volumeFoods;
+
+  // live-filter options
   const filtered = options.filter((f) =>
     f.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleSearchChange = (e) => {
+    const val = e.target.value;
+    setSearchTerm(val);
+    const match = options.find((f) => f.name === val);
+    setSelectedFood(match || null);
+  };
 
   const handleAdd = () => {
     if (!selectedFood || !value) return;
@@ -145,7 +157,6 @@ function FoodLogger({ foodLog, setFoodLog }) {
         prot,
       },
     ]);
-
     setSearchTerm("");
     setSelectedFood(null);
     setValue("");
@@ -153,39 +164,38 @@ function FoodLogger({ foodLog, setFoodLog }) {
 
   return (
     <div>
-      <h4>Log Food</h4>
+      <h4>
+        Log Food
+        <InfoButton
+          message="Search for a food, select it, choose Count/Weight/Volume (and unit), enter the amount, then tap Add."
+        />
+      </h4>
       <input
-        placeholder="Search…"
+        placeholder="Search / select food…"
+        list="food-options"
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        onChange={handleSearchChange}
+        style={{ width: "100%", marginBottom: 8 }}
       />
+      <datalist id="food-options">
+        {filtered.map((f, i) => (
+          <option key={i} value={f.name} />
+        ))}
+      </datalist>
 
-      <div style={{ display: "flex", gap: 8, margin: "8px 0" }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <select
           value={measurementType}
           onChange={(e) => {
             setMeasurementType(e.target.value);
             setUnit(e.target.value === "volume" ? "Cups" : "g");
             setSelectedFood(null);
+            setSearchTerm("");
           }}
         >
           <option value="count">Count</option>
           <option value="weight">Weight (g)</option>
           <option value="volume">Volume</option>
-        </select>
-
-        <select
-          value={selectedFood ? selectedFood.name : ""}
-          onChange={(e) =>
-            setSelectedFood(
-              options.find((o) => o.name === e.target.value) || null
-            )
-          }
-        >
-          <option value="">Select food</option>
-          {filtered.map((f, i) => (
-            <option key={i}>{f.name}</option>
-          ))}
         </select>
 
         {measurementType === "volume" && (
@@ -220,6 +230,7 @@ export default function App() {
     )}-${String(d.getDate()).padStart(2, "0")}`;
   })();
 
+  // Screen & profile
   const [screen, setScreen] = useState("home");
   const [editingProfile, setEditingProfile] = useState(
     () => localStorage.getItem("onboardingComplete") !== "true"
@@ -233,6 +244,7 @@ export default function App() {
     () => localStorage.getItem("weight") || ""
   );
 
+  // Today's logs
   const [steps, setSteps] = useState(
     () => parseInt(localStorage.getItem(`steps-${today}`), 10) || 0
   );
@@ -245,19 +257,21 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // Edit states
   const [foodEditingIndex, setFoodEditingIndex] = useState(null);
   const [tempFood, setTempFood] = useState({ name: "", cal: "", prot: "" });
   const [weightEditingIndex, setWeightEditingIndex] = useState(null);
   const [tempWeight, setTempWeight] = useState("");
 
+  // Custom entry
   const [customName, setCustomName] = useState("");
   const [customCal, setCustomCal] = useState("");
   const [customProt, setCustomProt] = useState("");
 
+  // Calculations
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
-
   const bmr = () => {
     const h = parseInt(height, 10),
       w = parseFloat(weight),
@@ -275,6 +289,7 @@ export default function App() {
   const wNum = parseFloat(weight);
   const proteinGoal = Number.isFinite(wNum) ? Math.round(wNum * 0.8) : 0;
 
+  // Persist to localStorage
   useEffect(() => {
     localStorage.setItem("sex", sex);
     localStorage.setItem("age", age);
@@ -291,6 +306,7 @@ export default function App() {
     localStorage.setItem("weightLog", JSON.stringify(weightLog));
   }, [weightLog]);
 
+  // Handlers
   const finishOnboarding = () => {
     localStorage.setItem("onboardingComplete", "true");
     setEditingProfile(false);
@@ -355,6 +371,7 @@ export default function App() {
     localStorage.removeItem(`steps-${today}`);
   };
 
+  // Render onboarding
   if (editingProfile) {
     return (
       <div style={{ padding: 24 }}>
@@ -387,6 +404,7 @@ export default function App() {
     );
   }
 
+  // Render main
   return (
     <div
       style={{
@@ -397,6 +415,7 @@ export default function App() {
         fontFamily: "sans-serif",
       }}
     >
+      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2>The 500 Plan</h2>
         <button
@@ -409,10 +428,12 @@ export default function App() {
         </button>
       </div>
 
+      {/* Home screen */}
       {screen === "home" && (
         <>
           <h3>
-            Calories<InfoButton message="Your BMR minus 500 kcal + steps" />
+            Calories
+            <InfoButton message="Your BMR minus 500 kcal + steps" />
           </h3>
           <ProgressBar
             value={calsToday}
@@ -422,7 +443,8 @@ export default function App() {
           />
 
           <h3>
-            Protein<InfoButton message="0.8 g per lb bodyweight" />
+            Protein
+            <InfoButton message="0.8 g per lb bodyweight" />
           </h3>
           <ProgressBar
             value={proteinToday}
@@ -432,7 +454,8 @@ export default function App() {
           />
 
           <h3>
-            Steps<InfoButton message="0.04 kcal per step" />
+            Steps
+            <InfoButton message="0.04 kcal per step" />
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
@@ -455,6 +478,7 @@ export default function App() {
         </>
       )}
 
+      {/* Food screen */}
       {screen === "food" && (
         <>
           <FoodLogger foodLog={foodLog} setFoodLog={setFoodLog} />
@@ -522,6 +546,7 @@ export default function App() {
         </>
       )}
 
+      {/* Weight screen */}
       {screen === "weight" && (
         <>
           <h3>Track Weight</h3>
@@ -541,7 +566,7 @@ export default function App() {
               <input
                 placeholder="Today's weight"
                 value={tempWeight}
-                onChange={(e) => setTempWeight(e.target.value)}
+                onChange={(e) => setTempWeight(e.target.value))}
               />
               <button onClick={addWeightLog}>Log</button>
             </>
@@ -575,6 +600,7 @@ export default function App() {
         </>
       )}
 
+      {/* Bottom nav */}
       <div
         style={{
           position: "fixed",
