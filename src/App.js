@@ -1,4 +1,3 @@
-// App.js
 import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import {
@@ -115,11 +114,10 @@ function FoodLogger({ foodLog, setFoodLog }) {
     f.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    const match = options.find((f) => f.name === e.target.value);
+  useEffect(() => {
+    const match = options.find((f) => f.name === searchTerm);
     setSelectedFood(match || null);
-  };
+  }, [searchTerm, options]);
 
   const handleAdd = () => {
     if (!selectedFood || !value) return;
@@ -154,7 +152,6 @@ function FoodLogger({ foodLog, setFoodLog }) {
       },
     ]);
     setSearchTerm("");
-    setSelectedFood(null);
     setValue("");
   };
 
@@ -166,27 +163,22 @@ function FoodLogger({ foodLog, setFoodLog }) {
           message="Quickly log everything you eat—search or select a food, choose count, weight, or volume, enter the amount, and hit Add. Consistent logging helps you stay on track with your daily calorie and protein goals."
         />
       </h4>
-      <input
-        list="food-options"
-        placeholder="Search / select food…"
-        value={searchTerm}
-        onChange={handleSearchChange}
-        style={{ width: "100%", marginBottom: 8 }}
-      />
-      <datalist id="food-options">
-        {filtered.map((f, i) => (
-          <option key={i} value={f.name} />
-        ))}
-      </datalist>
 
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+        <input
+          list="food-options"
+          placeholder="Search / select food…"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{ flex: 1 }}
+        />
         <select
           value={measurementType}
           onChange={(e) => {
             setMeasurementType(e.target.value);
-            setUnit(e.target.value === "volume" ? "Cups" : "Cups");
-            setSelectedFood(null);
+            setUnit("Cups");
             setSearchTerm("");
+            setValue("");
           }}
         >
           <option value="count">Count</option>
@@ -204,14 +196,20 @@ function FoodLogger({ foodLog, setFoodLog }) {
 
         <input
           type="number"
-          placeholder="Amount"
-          style={{ width: 80 }}
+          placeholder="Amt"
+          style={{ width: 60 }}
           value={value}
           onChange={(e) => setValue(Math.max(0, +e.target.value))}
         />
 
         <button onClick={handleAdd}>Add</button>
       </div>
+
+      <datalist id="food-options">
+        {filtered.map((f, i) => (
+          <option key={i} value={f.name} />
+        ))}
+      </datalist>
     </div>
   );
 }
@@ -239,6 +237,7 @@ export default function App() {
   const [weight, setWeight] = useState(
     () => localStorage.getItem("weight") || ""
   );
+  const [darkMode, setDarkMode] = useState(false);
 
   // Today's logs
   const [steps, setSteps] = useState(
@@ -253,9 +252,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Edit state
-  const [foodEditingIndex, setFoodEditingIndex] = useState(null);
-  const [tempFood, setTempFood] = useState({ name: "", cal: "", prot: "" });
+  // Weight editing state
   const [weightEditingIndex, setWeightEditingIndex] = useState(null);
   const [tempWeight, setTempWeight] = useState("");
 
@@ -315,36 +312,16 @@ export default function App() {
       return;
     }
     setFoodLog((f) => [...f, { name: customName, cal: cals, prot: pro }]);
-    setCustomName(""); setCustomCal(""); setCustomProt("");
+    setCustomName("");
+    setCustomCal("");
+    setCustomProt("");
   };
-  const startEditFood = (i) => {
-    setFoodEditingIndex(i);
-    setTempFood({ ...foodLog[i] });
-  };
-  const saveEditFood = (i) => {
-    setFoodLog((f) =>
-      f.map((it, idx) =>
-        idx === i
-          ? { name: tempFood.name, cal: +tempFood.cal, prot: +tempFood.prot }
-          : it
-      )
-    );
-    setFoodEditingIndex(null);
-  };
-  const cancelEditFood = () => setFoodEditingIndex(null);
-  const removeFood = (i) =>
-    setFoodLog((f) => f.filter((_, idx) => idx !== i));
-
   const addWeightLog = () => {
     const w = parseFloat(tempWeight);
     if (!isNaN(w)) {
       setWeightLog((prev) => [...prev, { date: today, weight: w }]);
       setTempWeight("");
     }
-  };
-  const startEditWeight = (i) => {
-    setWeightEditingIndex(i);
-    setTempWeight(weightLog[i].weight.toString());
   };
   const saveEditWeight = (i) => {
     setWeightLog((w) =>
@@ -354,21 +331,31 @@ export default function App() {
     );
     setWeightEditingIndex(null);
   };
-  const cancelEditWeight = () => setWeightEditingIndex(null);
   const deleteWeight = (i) =>
     setWeightLog((w) => w.filter((_, idx) => idx !== i));
 
-  const resetDay = () => {
-    setFoodLog([]);
-    setSteps(0);
-    localStorage.removeItem(`foodLog-${today}`);
-    localStorage.removeItem(`steps-${today}`);
+  const handleResetDay = () => {
+    if (
+      window.confirm(
+        "Reset all of today’s steps and food logs? This cannot be undone."
+      )
+    ) {
+      setFoodLog([]);
+      setSteps(0);
+      localStorage.removeItem(`foodLog-${today}`);
+      localStorage.removeItem(`steps-${today}`);
+    }
   };
 
-  // ── Onboarding ─────────────────────────────────────────────────────────
   if (editingProfile) {
     return (
-      <div style={{ padding: 24 }}>
+      <div
+        style={{
+          padding: 24,
+          background: darkMode ? "#121212" : "#fff",
+          color: darkMode ? "#eee" : "#000",
+        }}
+      >
         <h2>The 500 Plan</h2>
         <p>Track food. Hit your goals. Lose a pound a week.</p>
         <label>
@@ -385,12 +372,18 @@ export default function App() {
         <br />
         <label>
           Height (in):{" "}
-          <input value={height} onChange={(e) => setHeight(e.target.value)} />
+          <input
+            value={height}
+            onChange={(e) => setHeight(e.target.value)}
+          />
         </label>
         <br />
         <label>
           Weight (lbs):{" "}
-          <input value={weight} onChange={(e) => setWeight(e.target.value)} />
+          <input
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+          />
         </label>
         <br />
         <button onClick={finishOnboarding}>Save &amp; Start</button>
@@ -398,7 +391,6 @@ export default function App() {
     );
   }
 
-  // ── Main UI ─────────────────────────────────────────────────────────────
   return (
     <div
       style={{
@@ -407,26 +399,37 @@ export default function App() {
         maxWidth: 500,
         margin: "auto",
         fontFamily: "sans-serif",
+        background: darkMode ? "#121212" : "#fff",
+        color: darkMode ? "#eee" : "#000",
       }}
     >
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2>The 500 Plan</h2>
-        <button
-          onClick={() => {
-            localStorage.removeItem("onboardingComplete");
-            setEditingProfile(true);
-          }}
-        >
-          ⚙️
-        </button>
+        <div>
+          <button
+            onClick={() => setDarkMode((dm) => !dm)}
+            style={{ marginRight: 8 }}
+          >
+            {darkMode ? "☀️" : "🌙"}
+          </button>
+          <button
+            onClick={() => {
+              localStorage.removeItem("onboardingComplete");
+              setEditingProfile(true);
+            }}
+          >
+            ⚙️
+          </button>
+        </div>
       </div>
 
       {/* Home */}
       {screen === "home" && (
         <>
           <h3>
-            Calories<InfoButton message="Your BMR (Basal Metabolic Rate) is the number of calories your body burns at rest—basically, what you’d burn if you spent all day in bed. We subtract 500 kcal from your BMR to create a safe, sustainable daily deficit that leads to about one pound of fat loss per week." />
+            Calories
+            <InfoButton message="Your BMR (Basal Metabolic Rate) is the number of calories your body burns at rest—basically, what you’d burn if you spent all day in bed. We subtract 500 kcal from your BMR to create a safe, sustainable daily deficit that leads to about one pound of fat loss per week." />
           </h3>
           <ProgressBar
             value={calsToday}
@@ -436,7 +439,8 @@ export default function App() {
           />
 
           <h3>
-            Protein<InfoButton message="Protein is the building block for muscles, organs, and even your skin and hair. When you’re in a calorie deficit, getting enough protein helps preserve lean muscle mass and keeps you feeling full. We recommend resistance training alongside the 500 Plan so that the calories you do eat go toward maintaining and building muscle." />
+            Protein
+            <InfoButton message="Protein is the building block for muscles, organs, and even your skin and hair. When you’re in a calorie deficit, getting enough protein helps preserve lean muscle mass and keeps you feeling full. We recommend resistance training alongside the 500 Plan so that the calories you do eat go toward maintaining and building muscle." />
           </h3>
           <ProgressBar
             value={proteinToday}
@@ -446,46 +450,25 @@ export default function App() {
           />
 
           <h3>
-            Steps<InfoButton message="Walking is one of the easiest ways to burn extra calories without draining your energy. A target of 10,000 steps adds roughly 300–500 cal of burn per day—making your overall deficit that much more attainable and giving your metabolism a gentle boost." />
+            Steps
+            <InfoButton message="Walking is one of the easiest ways to burn extra calories without draining your energy. A target of 10,000 steps adds roughly 300–500 cal of burn per day—making your overall deficit that much more attainable and giving your metabolism a gentle boost." />
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
-      type="text"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      placeholder="0"
-      value={steps === 0 ? "" : steps.toString()}
-      onChange={(e) => {
-      const raw = e.target.value;
-      // allow only digits
-      if (/^\d*$/.test(raw)) {
-      // empty → zero, otherwise parse int
-      setSteps(raw === "" ? 0 : parseInt(raw, 10));
-      }
-      }}
-      style={{ width: 80 }}
-      />
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="0"
+            value={steps === 0 ? "" : steps.toString()}
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (/^\d*$/.test(raw)) {
+                setSteps(raw === "" ? 0 : parseInt(raw, 10));
+              }
+            }}
+            style={{ width: 80 }}
+          />
           <p>+{caloriesFromSteps} cal from steps</p>
-      <button
-      onClick={() => {
-      if (
-      window.confirm(
-      "Are you sure? This cannot be undone."
-      )
-      ) {
-      resetDay();
-      }
-      }}
-      style={{
-      marginTop: 10,
-      background: "#000",
-      color: "#fff",
-      padding: 10,
-      borderRadius: 5,
-      }}
-      >
-      🔄 Reset Day
-      </button>
         </>
       )}
 
@@ -510,47 +493,52 @@ export default function App() {
             placeholder="Protein"
             type="number"
             value={customProt}
-            onChange={(e) => setCustomCal(Math.max(0, +e.target.value))}
+            onChange={(e) => setCustomProt(Math.max(0, +e.target.value))}
           />
           <button onClick={addCustomFood}>Add</button>
 
           <h4>Logged Foods</h4>
           <ul>
             {foodLog.map((it, i) => (
-              <li key={i} style={{ marginBottom: 6 }}>
-                {foodEditingIndex === i ? (
-                  <>
-                    <input
-                      value={tempFood.name}
-                      onChange={(e) =>
-                        setTempFood((t) => ({ ...t, name: e.target.value }))
-                      }
-                    />
-                    <input
-                      value={tempFood.cal}
-                      type="number"
-                      onChange={(e) =>
-                        setTempFood((t) => ({ ...t, cal: e.target.value }))
-                      }
-                    />
-                    <input
-                      value={tempFood.prot}
-                      type="number"
-                      onChange={(e) =>
-                        setTempFood((t) => ({ ...t, prot: e.target.value }))
-                      }
-                    />
-                    <button onClick={() => saveEditFood(i)}>Save</button>
-                    <button onClick={cancelEditFood}>Cancel</button>
-                  </>
-                ) : (
-                  <>
-                    {it.name} — {it.cal.toFixed(1)} kcal /{" "}
-                    {it.prot.toFixed(1)}g protein{" "}
-                    <button onClick={() => startEditFood(i)}>✏️</button>{" "}
-                    <button onClick={() => removeFood(i)}>✖️</button>
-                  </>
-                )}
+              <li
+                key={i}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  const choice = window.prompt(
+                    "Type 'e' to edit or 'd' to delete."
+                  );
+                  if (choice === "d") {
+                    setFoodLog((f) => f.filter((_, idx) => idx !== i));
+                  } else if (choice === "e") {
+                    const newName = window.prompt("New name:", it.name);
+                    const newCal = window.prompt("New calories:", it.cal);
+                    const newProt = window.prompt(
+                      "New protein:",
+                      it.prot
+                    );
+                    if (
+                      newName !== null &&
+                      newCal !== null &&
+                      newProt !== null
+                    ) {
+                      setFoodLog((f) =>
+                        f.map((item, idx) =>
+                          idx === i
+                            ? {
+                                name: newName,
+                                cal: parseFloat(newCal),
+                                prot: parseFloat(newProt),
+                              }
+                            : item
+                        )
+                      );
+                    }
+                  }
+                }}
+                style={{ marginBottom: 6, cursor: "context-menu" }}
+              >
+                {it.name} — {it.cal.toFixed(1)} kcal /{" "}
+                {it.prot.toFixed(1)}g protein
               </li>
             ))}
           </ul>
@@ -570,7 +558,9 @@ export default function App() {
               <button onClick={() => saveEditWeight(weightEditingIndex)}>
                 Save
               </button>
-              <button onClick={cancelEditWeight}>Cancel</button>
+              <button onClick={() => setWeightEditingIndex(null)}>
+                Cancel
+              </button>
             </>
           ) : (
             <>
@@ -598,13 +588,14 @@ export default function App() {
           <ul>
             {weightLog.map((w, i) => (
               <li key={i} style={{ marginBottom: 6 }}>
-                {weightEditingIndex === i ? null : (
-                  <>
-                    {w.date}: {w.weight} lb{" "}
-                    <button onClick={() => startEditWeight(i)}>✏️</button>{" "}
-                    <button onClick={() => deleteWeight(i)}>✖️</button>
-                  </>
-                )}
+                {w.date}: {w.weight} lb{" "}
+                <button onClick={() => {
+                  setWeightEditingIndex(i);
+                  setTempWeight(w.weight.toString());
+                }}>
+                  ✏️
+                </button>{" "}
+                <button onClick={() => deleteWeight(i)}>✖️</button>
               </li>
             ))}
           </ul>
@@ -643,6 +634,12 @@ export default function App() {
           onClick={() => setScreen("weight")}
         >
           ⚖️ Weight
+        </button>
+        <button
+          style={navBtnStyle(false)}
+          onClick={handleResetDay}
+        >
+          🔄 Reset
         </button>
       </div>
     </div>
