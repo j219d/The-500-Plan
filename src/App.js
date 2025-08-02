@@ -202,12 +202,20 @@ function FoodLogger({ foodLog, setFoodLog }) {
           </select>
         )}
 
+        {/* Numeric-only Amount */}
         <input
-          type="number"
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           placeholder="Amount"
           style={{ width: 80 }}
           value={value}
-          onChange={(e) => setValue(Math.max(0, +e.target.value))}
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (/^\d*$/.test(raw)) {
+              setValue(raw);
+            }
+          }}
         />
 
         <button onClick={handleAdd}>Add</button>
@@ -315,7 +323,9 @@ export default function App() {
       return;
     }
     setFoodLog((f) => [...f, { name: customName, cal: cals, prot: pro }]);
-    setCustomName(""); setCustomCal(""); setCustomProt("");
+    setCustomName("");
+    setCustomCal("");
+    setCustomProt("");
   };
   const startEditFood = (i) => {
     setFoodEditingIndex(i);
@@ -450,42 +460,40 @@ export default function App() {
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
-      type="text"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      placeholder="0"
-      value={steps === 0 ? "" : steps.toString()}
-      onChange={(e) => {
-      const raw = e.target.value;
-      // allow only digits
-      if (/^\d*$/.test(raw)) {
-      // empty → zero, otherwise parse int
-      setSteps(raw === "" ? 0 : parseInt(raw, 10));
-      }
-      }}
-      style={{ width: 80 }}
-      />
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            placeholder="0"
+            value={steps === 0 ? "" : steps.toString()}
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (/^\d*$/.test(raw)) {
+                setSteps(raw === "" ? 0 : parseInt(raw, 10));
+              }
+            }}
+            style={{ width: 80 }}
+          />
           <p>+{caloriesFromSteps} cal from steps</p>
-      <button
-      onClick={() => {
-      if (
-      window.confirm(
-      "Are you sure? This cannot be undone."
-      )
-      ) {
-      resetDay();
-      }
-      }}
-      style={{
-      marginTop: 10,
-      background: "#000",
-      color: "#fff",
-      padding: 10,
-      borderRadius: 5,
-      }}
-      >
-      🔄 Reset Day
-      </button>
+          <button
+            onClick={() => {
+              if (
+                window.confirm(
+                  "Are you sure? This cannot be undone."
+                )
+              ) {
+                resetDay();
+              }
+            }}
+            style={{
+              marginTop: 10,
+              background: "#000",
+              color: "#fff",
+              padding: 10,
+              borderRadius: 5,
+            }}
+          >
+            🔄 Reset Day
+          </button>
         </>
       )}
 
@@ -500,17 +508,29 @@ export default function App() {
             value={customName}
             onChange={(e) => setCustomName(e.target.value)}
           />
+          {/* Numeric-only Calories */}
           <input
             placeholder="Calories"
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={customCal}
-            onChange={(e) => setCustomCal(Math.max(0, +e.target.value))}
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (/^\d*$/.test(raw)) setCustomCal(raw);
+            }}
           />
+          {/* Numeric-only Protein */}
           <input
             placeholder="Protein"
-            type="number"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={customProt}
-            onChange={(e) => setCustomCal(Math.max(0, +e.target.value))}
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (/^\d*$/.test(raw)) setCustomProt(raw);
+            }}
           />
           <button onClick={addCustomFood}>Add</button>
 
