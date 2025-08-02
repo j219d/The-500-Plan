@@ -388,7 +388,7 @@ function App() {
             Calories
             <InfoButton
               message={
-                "Your BMR (Basal Metabolic Rate) is the calories you'd burn at rest all day. We subtract 500 kcal from your BMR plus any calories from steps to help you lose about 1 lb/week."
+                "Your BMR (Basal Metabolic Rate) is the number of calories your body burns at rest—basically, what you’d burn if you spent all day in bed. We subtract 500 kcal from your BMR to create a safe, sustainable daily deficit that leads to about one pound of fat loss per week."
               }
             />
           </h3>
@@ -403,7 +403,7 @@ function App() {
             Protein
             <InfoButton
               message={
-                "Protein helps maintain and build muscle while losing weight. We target 0.8 g per lb of body weight and recommend resistance training on The 500 Plan."
+                "Protein is the building block for muscles, organs, and even your skin and hair. When you’re in a calorie deficit, getting enough protein helps preserve lean muscle mass and keeps you feeling full. We recommend resistance training alongside the 500 Plan so that the calories you do eat go toward maintaining and building muscle."
               }
             />
           </h3>
@@ -418,7 +418,7 @@ function App() {
             Steps
             <InfoButton
               message={
-                "Walking burns calories without draining energy. Aim for 10 000 steps daily to boost your deficit and make weight loss more attainable."
+                "Walking is one of the easiest ways to burn extra calories without draining your energy. A target of 10,000 steps adds roughly 300–500 cal of burn per day—making your overall deficit that much more attainable and giving your metabolism a gentle boost."
               }
             />
           </h3>
