@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -6,19 +6,14 @@ import {
   LinearScale,
   PointElement,
   LineElement,
-  Tooltip,
-  Legend,
 } from "chart.js";
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
 
-// ── Simple reusable info button with tap feedback ────────────────────────
+// ── Simple reusable info button ──────────────────────────────────────────
 const InfoButton = ({ message }) => (
   <span
-    onClick={() => {
-      alert(message);
-      if (navigator.vibrate) navigator.vibrate(10);
-    }}
+    onClick={() => alert(message)}
     style={{
       marginLeft: 6,
       cursor: "pointer",
@@ -34,13 +29,13 @@ const InfoButton = ({ message }) => (
 
 function App() {
   // ── LOCAL DATE ───────────────────────────────────────────────────────────
-  const today = useMemo(() => {
+  const today = (() => {
     const d = new Date();
     const Y = d.getFullYear();
     const M = String(d.getMonth() + 1).padStart(2, "0");
     const D = String(d.getDate()).padStart(2, "0");
     return `${Y}-${M}-${D}`;
-  }, []);
+  })();
 
   // ── SCREENS & PROFILE ────────────────────────────────────────────────────
   const [screen, setScreen] = useState("home");
@@ -77,50 +72,54 @@ function App() {
   const [weightEditingIndex, setWeightEditingIndex] = useState(null);
   const [tempWeight, setTempWeight] = useState("");
 
-  // ── UNIFIED FOOD LIST ──────────────────────────────────────────────────
+  // ── NEW FOOD‐SEARCH & UNITS ─────────────────────────────────────────────
+  // 1) Count‐based
   const countFoods = [
-    { name: "Apple", cal: 95, prot: 1, type: "count" },
-    { name: "Banana", cal: 105, prot: 1.3, type: "count" },
-    { name: "Egg", cal: 70, prot: 6, type: "count" },
-    { name: "Avocado", cal: 240, prot: 3, type: "count" },
-    { name: "Walnut", cal: 26, prot: 0.6, type: "count" },
-    { name: "Strawberry", cal: 4, prot: 0.1, type: "count" },
+    { name: "Apple", cal: 95, prot: 1 },
+    { name: "Banana", cal: 105, prot: 1.3 },
+    { name: "Egg", cal: 70, prot: 6 },
+    { name: "Avocado", cal: 240, prot: 3 },
+    { name: "Walnut", cal: 26, prot: 0.6 },
+    { name: "Strawberry", cal: 4, prot: 0.1 },
   ];
+  const [searchCount, setSearchCount] = useState("");
+  const [selectedCountFood, setSelectedCountFood] = useState(null);
+  const [countValue, setCountValue] = useState("");
+
+  // 2) Weight‐based (grams)
   const weightFoods = [
-    { name: "Chicken breast", calPer100g: 165, protPer100g: 31, type: "weight" },
-    { name: "Salmon", calPer100g: 206, protPer100g: 22, type: "weight" },
-    { name: "Broccoli", calPer100g: 34, protPer100g: 2.8, type: "weight" },
-    { name: "White rice", calPer100g: 130, protPer100g: 2.6, type: "weight" },
-    { name: "Brown rice", calPer100g: 112, protPer100g: 2.6, type: "weight" },
-    { name: "Spinach", calPer100g: 23, protPer100g: 2.9, type: "weight" },
-    { name: "Black beans", calPer100g: 132, protPer100g: 8.9, type: "weight" },
-    { name: "Strawberries", calPer100g: 32, protPer100g: 0.7, type: "weight" },
+    { name: "Chicken breast", calPer100g: 165, protPer100g: 31 },
+    { name: "Salmon", calPer100g: 206, protPer100g: 22 },
+    { name: "Broccoli", calPer100g: 34, protPer100g: 2.8 },
+    { name: "White rice", calPer100g: 130, protPer100g: 2.6 },
+    { name: "Brown rice", calPer100g: 112, protPer100g: 2.6 },
+    { name: "Spinach", calPer100g: 23, protPer100g: 2.9 },
+    { name: "Black beans", calPer100g: 132, protPer100g: 8.9 },
+    { name: "Strawberries", calPer100g: 32, protPer100g: 0.7 },
   ];
+  const [searchWeight, setSearchWeight] = useState("");
+  const [selectedWeightFood, setSelectedWeightFood] = useState(null);
+  const [gramValue, setGramValue] = useState("");
+
+  // 3) Volume‐based (cups / tbsp / tsp)
   const volumeFoods = [
-    { name: "Oats (dry)", calPerCup: 307, protPerCup: 11, type: "volume" },
-    { name: "Chia seeds", calPerCup: 778, protPerCup: 28, type: "volume" },
-    { name: "Peanut butter", calPerCup: 1504, protPerCup: 64, type: "volume" },
-    { name: "Honey", calPerCup: 1031, protPerCup: 0, type: "volume" },
-    { name: "Maple syrup", calPerCup: 819, protPerCup: 0, type: "volume" },
-    { name: "Greek yogurt", calPerCup: 130, protPerCup: 23, type: "volume" },
-    { name: "Almond milk", calPerCup: 91, protPerCup: 3.6, type: "volume" },
+    { name: "Oats (dry)", calPerCup: 307, protPerCup: 11 },
+    { name: "Chia seeds", calPerCup: 778, protPerCup: 28 },
+    { name: "Peanut butter", calPerCup: 1504, protPerCup: 64 },
+    { name: "Honey", calPerCup: 1031, protPerCup: 0 },
+    { name: "Maple syrup", calPerCup: 819, protPerCup: 0 },
+    { name: "Greek yogurt", calPerCup: 130, protPerCup: 23 },
+    { name: "Almond milk", calPerCup: 91, protPerCup: 3.6 },
   ];
   const volumeUnits = [
     { label: "Cups", factor: 1 },
     { label: "Tbsp", factor: 1 / 16 },
     { label: "Tsp", factor: 1 / 48 },
   ];
-
-  const unifiedFoods = useMemo(
-    () => [...countFoods, ...weightFoods, ...volumeFoods],
-    []
-  );
-
-  // ── NEW FOOD‐LOGGING UI STATE ──────────────────────────────────────────
-  const [searchFood, setSearchFood] = useState("");
-  const [selectedFood, setSelectedFood] = useState(null);
-  const [measureValue, setMeasureValue] = useState("");
-  const [measureUnit, setMeasureUnit] = useState("Cups");
+  const [searchVolume, setSearchVolume] = useState("");
+  const [selectedVolumeFood, setSelectedVolumeFood] = useState(null);
+  const [volumeValue, setVolumeValue] = useState("");
+  const [volumeUnit, setVolumeUnit] = useState("Cups");
 
   // ── CUSTOM FOOD ENTRY ───────────────────────────────────────────────────
   const [customName, setCustomName] = useState("");
@@ -128,14 +127,8 @@ function App() {
   const [customProt, setCustomProt] = useState("");
 
   // ── CALCULATIONS ─────────────────────────────────────────────────────────
-  const calsToday = useMemo(
-    () => foodLog.reduce((sum, f) => sum + f.cal, 0),
-    [foodLog]
-  );
-  const proteinToday = useMemo(
-    () => foodLog.reduce((sum, f) => sum + f.prot, 0),
-    [foodLog]
-  );
+  const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
+  const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
 
   function bmr() {
@@ -166,11 +159,11 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem(`foodLog-${today}`, JSON.stringify(foodLog));
-  }, [foodLog, today]);
+  }, [foodLog]);
 
   useEffect(() => {
     localStorage.setItem(`steps-${today}`, steps.toString());
-  }, [steps, today]);
+  }, [steps]);
 
   useEffect(() => {
     localStorage.setItem("weightLog", JSON.stringify(weightLog));
@@ -182,44 +175,56 @@ function App() {
     setEditingProfile(false);
   };
 
-  const handleAddFood = () => {
-    if (!selectedFood || !measureValue) return;
-    let cal = 0,
-      prot = 0,
-      name = "";
-    const val = +measureValue;
-
-    if (selectedFood.type === "count") {
-      cal = selectedFood.cal * val;
-      prot = selectedFood.prot * val;
-      name = `${val}× ${selectedFood.name}`;
-    } else if (selectedFood.type === "weight") {
-      const factor = val / 100;
-      cal = selectedFood.calPer100g * factor;
-      prot = selectedFood.protPer100g * factor;
-      name = `${val} g ${selectedFood.name}`;
-    } else if (selectedFood.type === "volume") {
-      const unit = volumeUnits.find((u) => u.label === measureUnit) || {
-        factor: 1,
-      };
-      const factor = unit.factor * val;
-      cal = selectedFood.calPerCup * factor;
-      prot = selectedFood.protPerCup * factor;
-      name = `${val} ${measureUnit} ${selectedFood.name}`;
-    }
-
+  // 1) COUNT
+  const handleAddCount = () => {
+    if (!selectedCountFood || !countValue) return;
+    const cal = selectedCountFood.cal * +countValue;
+    const prot = selectedCountFood.prot * +countValue;
     setFoodLog((f) => [
       ...f,
-      { name, cal: parseFloat(cal.toFixed(1)), prot: parseFloat(prot.toFixed(1)) },
+      { name: `${countValue}× ${selectedCountFood.name}`, cal, prot },
     ]);
-
-    // clear inputs + haptic
-    setMeasureValue("");
-    setSelectedFood(null);
-    setSearchFood("");
-    if (navigator.vibrate) navigator.vibrate(10);
+    setCountValue("");
+    setSelectedCountFood(null);
+    setSearchCount("");
   };
 
+  // 2) WEIGHT
+  const handleAddWeight = () => {
+    if (!selectedWeightFood || !gramValue) return;
+    const factor = +gramValue / 100;
+    const cal = selectedWeightFood.calPer100g * factor;
+    const prot = selectedWeightFood.protPer100g * factor;
+    setFoodLog((f) => [
+      ...f,
+      { name: `${gramValue}g ${selectedWeightFood.name}`, cal, prot },
+    ]);
+    setGramValue("");
+    setSelectedWeightFood(null);
+    setSearchWeight("");
+  };
+
+  // 3) VOLUME
+  const handleAddVolume = () => {
+    if (!selectedVolumeFood || !volumeValue) return;
+    const unit = volumeUnits.find((u) => u.label === volumeUnit);
+    const factor = unit.factor * +volumeValue;
+    const cal = selectedVolumeFood.calPerCup * factor;
+    const prot = selectedVolumeFood.protPerCup * factor;
+    setFoodLog((f) => [
+      ...f,
+      {
+        name: `${volumeValue} ${volumeUnit} ${selectedVolumeFood.name}`,
+        cal,
+        prot,
+      },
+    ]);
+    setVolumeValue("");
+    setSelectedVolumeFood(null);
+    setSearchVolume("");
+  };
+
+  // 4) CUSTOM
   const addCustomFood = () => {
     const cals = parseFloat(customCal);
     const pro = parseFloat(customProt) || 0;
@@ -227,19 +232,17 @@ function App() {
       alert("Enter name and valid calories.");
       return;
     }
-    setFoodLog((f) => [
-      ...f,
-      { name: customName, cal: cals, prot: pro },
-    ]);
+    setFoodLog((f) => [...f, { name: customName, cal: cals, prot: pro }]);
     setCustomName("");
     setCustomCal("");
     setCustomProt("");
-    if (navigator.vibrate) navigator.vibrate(10);
   };
 
+  // EDIT / DELETE FOOD
   const startEditFood = (i) => {
+    const it = foodLog[i];
     setFoodEditingIndex(i);
-    setTempFood(foodLog[i]);
+    setTempFood({ name: it.name, cal: it.cal, prot: it.prot });
   };
   const saveEditFood = (i) => {
     setFoodLog((f) =>
@@ -250,21 +253,18 @@ function App() {
       )
     );
     setFoodEditingIndex(null);
-    if (navigator.vibrate) navigator.vibrate(10);
   };
   const cancelEditFood = () => setFoodEditingIndex(null);
   const removeFood = (i) =>
     setFoodLog((f) => f.filter((_, idx) => idx !== i));
 
+  // WEIGHT TRACK handlers unchanged…
   const addWeightLog = () => {
     const w = parseFloat(tempWeight);
     if (!isNaN(w)) {
-      setWeightLog((prev) => [
-        ...prev,
-        { date: today, weight: w },
-      ]);
+      const entry = { date: today, weight: w };
+      setWeightLog((prev) => [...prev, entry]);
       setTempWeight("");
-      if (navigator.vibrate) navigator.vibrate(10);
     }
   };
   const startEditWeight = (i) => {
@@ -278,7 +278,6 @@ function App() {
       )
     );
     setWeightEditingIndex(null);
-    if (navigator.vibrate) navigator.vibrate(10);
   };
   const cancelEditWeight = () => setWeightEditingIndex(null);
   const deleteWeight = (i) =>
@@ -291,34 +290,38 @@ function App() {
     localStorage.removeItem(`steps-${today}`);
   };
 
-  // ── CHART DATA (memoized) ────────────────────────────────────────────────
-  const graphData = useMemo(
-    () => ({
-      labels: weightLog.map((w) => w.date),
-      datasets: [
-        {
-          label: "Weight (lbs)",
-          data: weightLog.map((w) => w.weight),
-          fill: false,
-          borderColor: "blue",
-          tension: 0.1,
-        },
-      ],
-    }),
-    [weightLog]
+  // ── UI COMPONENTS ───────────────────────────────────────────────────────
+  const ProgressBar = ({ value, goal, color, label }) => (
+    <>
+      <div style={{ height: 20, background: "#eee", borderRadius: 10, overflow: "hidden" }}>
+        <div
+          style={{
+            width: `${Math.min((value / goal) * 100, 100)}%`,
+            background: color,
+            height: "100%",
+            transition: "width 0.3s ease",
+          }}
+        />
+      </div>
+      {label && <p>{label}</p>}
+    </>
   );
 
+  const graphData = {
+    labels: weightLog.map((w) => w.date),
+    datasets: [
+      { label: "Weight (lbs)", data: weightLog.map((w) => w.weight), fill: false, borderColor: "blue", tension: 0.1 },
+    ],
+  };
+
   const navBtnStyle = (active) => ({
-    flex: 1,
-    padding: 10,
-    fontSize: 16,
-    background: "none",
-    border: "none",
+    flex: 1, padding: 10, fontSize: 16,
+    background: "none", border: "none",
     fontWeight: active ? "bold" : "normal",
     cursor: "pointer",
   });
 
-// ── RENDER ─────────────────────────────────────────────────────────────
+  // ── RENDER ─────────────────────────────────────────────────────────────
   if (editingProfile) {
     return (
       <div style={{ padding: 24 }}>
