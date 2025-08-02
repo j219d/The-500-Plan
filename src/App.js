@@ -318,7 +318,7 @@ function App() {
     cursor: "pointer",
   });
 
-  // ── RENDER ─────────────────────────────────────────────────────────────
+// ── RENDER ─────────────────────────────────────────────────────────────
   if (editingProfile) {
     return (
       <div style={{ padding: 24 }}>
@@ -335,14 +335,22 @@ function App() {
         <label>Age: <input value={age} onChange={(e) => setAge(e.target.value)} /></label><br/>
         <label>Height (in): <input value={height} onChange={(e) => setHeight(e.target.value)} /></label><br/>
         <label>Weight (lbs): <input value={weight} onChange={(e) => setWeight(e.target.value)} /></label><br/>
-        <button onClick={finishOnboarding}>Save & Start</button>
+        <button onClick={finishOnboarding}>Save &amp; Start</button>
       </div>
     );
   }
 
   return (
-    <div style={{ padding:24, paddingBottom:80, maxWidth:500, margin:"auto", fontFamily:"sans-serif" }}>
-      <div style={{ display:"flex", justifyContent:"space-between" }}>
+    <div
+      style={{
+        padding: 24,
+        paddingBottom: 80,
+        maxWidth: 500,
+        margin: "auto",
+        fontFamily: "sans-serif",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2>The 500 Plan</h2>
         <button
           onClick={() => {
@@ -358,9 +366,11 @@ function App() {
         <>
           <h3>
             Calories
-            <InfoButton message={
-              "Your BMR (Basal Metabolic Rate) is the number of calories your body burns at rest—basically, what you’d burn if you spent all day in bed. We subtract 500 kcal from your BMR to create a safe, sustainable daily deficit that leads to about one pound of fat loss per week."
-            }/>
+            <InfoButton
+              message={
+                "Your BMR (Basal Metabolic Rate) is the number of calories your body burns at rest—basically, what you’d burn if you spent all day in bed. We subtract 500 kcal from your BMR to create a safe, sustainable daily deficit that leads to about one pound of fat loss per week."
+              }
+            />
           </h3>
           <ProgressBar
             value={calsToday}
@@ -371,9 +381,11 @@ function App() {
 
           <h3>
             Protein
-            <InfoButton message={
-              "Protein is the building block for muscles, organs, and even your skin and hair. When you’re in a calorie deficit, getting enough protein helps preserve lean muscle mass and keeps you feeling full. We recommend resistance training alongside the 500 Plan so that the calories you do eat go toward maintaining and building muscle."
-            }/>
+            <InfoButton
+              message={
+                "Protein is the building block for muscles, organs, and even your skin and hair. When you’re in a calorie deficit, getting enough protein helps preserve lean muscle mass and keeps you feeling full. We recommend resistance training alongside the 500 Plan so that the calories you do eat go toward maintaining and building muscle."
+              }
+            />
           </h3>
           <ProgressBar
             value={proteinToday}
@@ -384,9 +396,11 @@ function App() {
 
           <h3>
             Steps
-            <InfoButton message={
-              "Walking is one of the easiest ways to burn extra calories without draining your energy. A target of 10,000 steps adds roughly 300–500 cal of burn per day—making your overall deficit that much more attainable and giving your metabolism a gentle boost."
-            }/>
+            <InfoButton
+              message={
+                "Walking is one of the easiest ways to burn extra calories without draining your energy. A target of 10,000 steps adds roughly 300–500 cal of burn per day—making your overall deficit that much more attainable and giving your metabolism a gentle boost."
+              }
+            />
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
@@ -396,7 +410,13 @@ function App() {
           <p>+{caloriesFromSteps} cal from steps</p>
           <button
             onClick={resetDay}
-            style={{ marginTop:10, background:"#000", color:"#fff", padding:10, borderRadius:5 }}
+            style={{
+              marginTop: 10,
+              background: "#000",
+              color: "#fff",
+              padding: 10,
+              borderRadius: 5,
+            }}
           >
             🔄 Reset Day
           </button>
@@ -406,107 +426,171 @@ function App() {
       {screen === "food" && (
         <>
           <h3>
-            Track Food
-            <InfoButton message={
-              "Choose from our curated list of ‘fat-loss friendly’ foods, pick how you’re measuring it, and hit Add. If it’s not on the list, use Custom Entry at the bottom."
-            }/>
-          </h3>
-          <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:12 }}>
-            <input
-              placeholder="Search…"
-              value={searchFood}
-              onChange={e => setSearchFood(e.target.value)}
-            />
-            <select
-              value={selectedFood?.name || ""}
-              onChange={e => {
-                const f = unifiedFoods.find(x => x.name===e.target.value);
-                setSelectedFood(f || null);
-                setMeasureValue("");
-              }}
-            >
-              <option value="">Select food</option>
-              {unifiedFoods
-                .filter(f => f.name.toLowerCase().includes(searchFood.toLowerCase()))
-                .map((f,i) => <option key={i}>{f.name}</option>)}
-            </select>
-
-            {selectedFood?.type === "volume" && (
-              <select
-                value={measureUnit}
-                onChange={e=>setMeasureUnit(e.target.value)}
-              >
-                {volumeUnits.map(u=> <option key={u.label}>{u.label}</option>)}
-              </select>
-            )}
-
-            <input
-              type="number"
-              placeholder={
-                selectedFood?.type==="count"
-                  ? "Count"
-                  : selectedFood?.type==="weight"
-                  ? "g"
-                  : selectedFood?.type==="volume"
-                  ? "Amount"
-                  : "Value"
+            Food
+            <InfoButton
+              message={
+                "We provide three preset tracking modes—by count, by weight (g), and by volume—to make logging whole, fat-loss–friendly foods quick and accurate. If your food isn't listed, use Custom Entry. This keeps you on track with our curated list; anything else must be entered manually."
               }
-              value={measureValue}
-              onChange={e=>setMeasureValue(e.target.value)}
             />
-            <button onClick={handleAddFood}>Add</button>
-          </div>
+          </h3>
 
+          {/* 1) COUNT */}
+          <h4>By Count</h4>
+          <input
+            placeholder="Search…"
+            value={searchCount}
+            onChange={(e) => setSearchCount(e.target.value)}
+          />
+          <select
+            value={selectedCountFood ? selectedCountFood.name : ""}
+            onChange={(e) => {
+              const f = countFoods.find((f) => f.name === e.target.value);
+              setSelectedCountFood(f || null);
+            }}
+          >
+            <option value="">Select food</option>
+            {countFoods
+              .filter((f) =>
+                f.name.toLowerCase().includes(searchCount.toLowerCase())
+              )
+              .map((f, i) => (
+                <option key={i}>{f.name}</option>
+              ))}
+          </select>
+          <input
+            type="number"
+            placeholder="How many?"
+            value={countValue}
+            onChange={(e) => setCountValue(e.target.value)}
+          />
+          <button onClick={handleAddCount}>Add</button>
+
+          {/* 2) WEIGHT */}
+          <h4>By Weight (g)</h4>
+          <input
+            placeholder="Search…"
+            value={searchWeight}
+            onChange={(e) => setSearchWeight(e.target.value)}
+          />
+          <select
+            value={selectedWeightFood ? selectedWeightFood.name : ""}
+            onChange={(e) => {
+              const f = weightFoods.find((f) => f.name === e.target.value);
+              setSelectedWeightFood(f || null);
+            }}
+          >
+            <option value="">Select food</option>
+            {weightFoods
+              .filter((f) =>
+                f.name.toLowerCase().includes(searchWeight.toLowerCase())
+              )
+              .map((f, i) => (
+                <option key={i}>{f.name}</option>
+              ))}
+          </select>
+          <input
+            type="number"
+            placeholder="Grams"
+            value={gramValue}
+            onChange={(e) => setGramValue(e.target.value)}
+          />
+          <button onClick={handleAddWeight}>Add</button>
+
+          {/* 3) VOLUME */}
+          <h4>By Volume</h4>
+          <input
+            placeholder="Search…"
+            value={searchVolume}
+            onChange={(e) => setSearchVolume(e.target.value)}
+          />
+          <select
+            value={selectedVolumeFood ? selectedVolumeFood.name : ""}
+            onChange={(e) => {
+              const f = volumeFoods.find((f) => f.name === e.target.value);
+              setSelectedVolumeFood(f || null);
+            }}
+          >
+            <option value="">Select food</option>
+            {volumeFoods
+              .filter((f) =>
+                f.name.toLowerCase().includes(searchVolume.toLowerCase())
+              )
+              .map((f, i) => (
+                <option key={i}>{f.name}</option>
+              ))}
+          </select>
+          <input
+            type="number"
+            placeholder="Amount"
+            value={volumeValue}
+            onChange={(e) => setVolumeValue(e.target.value)}
+          />
+          <select
+            value={volumeUnit}
+            onChange={(e) => setVolumeUnit(e.target.value)}
+          >
+            {volumeUnits.map((u) => (
+              <option key={u.label}>{u.label}</option>
+            ))}
+          </select>
+          <button onClick={handleAddVolume}>Add</button>
+
+          {/* 4) CUSTOM */}
           <h4>Custom Entry</h4>
-          <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:12 }}>
-            <input
-              placeholder="Name"
-              value={customName}
-              onChange={e=>setCustomName(e.target.value)}
-            />
-            <input
-              placeholder="Calories"
-              type="number"
-              value={customCal}
-              onChange={e=>setCustomCal(e.target.value)}
-            />
-            <input
-              placeholder="Protein"
-              type="number"
-              value={customProt}
-              onChange={e=>setCustomProt(e.target.value)}
-            />
-            <button onClick={addCustomFood}>Add</button>
-          </div>
+          <input
+            placeholder="Name"
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+          />
+          <input
+            placeholder="Calories"
+            type="number"
+            value={customCal}
+            onChange={(e) => setCustomCal(e.target.value)}
+          />
+          <input
+            placeholder="Protein"
+            type="number"
+            value={customProt}
+            onChange={(e) => setCustomProt(e.target.value)}
+          />
+          <button onClick={addCustomFood}>Add</button>
 
           <h4>Logged Foods</h4>
           <ul>
-            {foodLog.map((it,i)=>(
-              <li key={i} style={{ marginBottom:6 }}>
-                {foodEditingIndex===i ? (
+            {foodLog.map((it, i) => (
+              <li key={i} style={{ marginBottom: 6 }}>
+                {foodEditingIndex === i ? (
                   <>
                     <input
                       value={tempFood.name}
-                      onChange={e=>setTempFood(t=>({...t,name:e.target.value}))}
+                      onChange={(e) =>
+                        setTempFood((t) => ({ ...t, name: e.target.value }))
+                      }
                     />
                     <input
                       value={tempFood.cal}
                       type="number"
-                      onChange={e=>setTempFood(t=>({...t,cal:e.target.value}))}
+                      onChange={(e) =>
+                        setTempFood((t) => ({ ...t, cal: e.target.value }))
+                      }
                     />
                     <input
                       value={tempFood.prot}
                       type="number"
-                      onChange={e=>setTempFood(t=>({...t,prot:e.target.value}))}
+                      onChange={(e) =>
+                        setTempFood((t) => ({ ...t, prot: e.target.value }))
+                      }
                     />
-                    <button onClick={()=>saveEditFood(i)}>Save</button>
+                    <button onClick={() => saveEditFood(i)}>Save</button>
                     <button onClick={cancelEditFood}>Cancel</button>
                   </>
                 ) : (
                   <>
-                    {it.name} — {it.cal.toFixed(1)} kcal / {it.prot.toFixed(1)}g protein{" "}
-                    <button onClick={()=>startEditFood(i)}>✏️</button>{" "}
-                    <button onClick={()=>removeFood(i)}>✖️</button>
+                    {it.name} — {it.cal.toFixed(1)} kcal /{" "}
+                    {it.prot.toFixed(1)}g protein{" "}
+                    <button onClick={() => startEditFood(i)}>✏️</button>{" "}
+                    <button onClick={() => removeFood(i)}>✖️</button>
                   </>
                 )}
               </li>
@@ -518,10 +602,15 @@ function App() {
       {screen === "weight" && (
         <>
           <h3>Track Weight</h3>
-          {weightEditingIndex!==null ? (
+          {weightEditingIndex !== null ? (
             <>
-              <input value={tempWeight} onChange={e=>setTempWeight(e.target.value)} />
-              <button onClick={()=>saveEditWeight(weightEditingIndex)}>Save</button>
+              <input
+                value={tempWeight}
+                onChange={(e) => setTempWeight(e.target.value)}
+              />
+              <button onClick={() => saveEditWeight(weightEditingIndex)}>
+                Save
+              </button>
               <button onClick={cancelEditWeight}>Cancel</button>
             </>
           ) : (
@@ -529,20 +618,20 @@ function App() {
               <input
                 placeholder="Today's weight"
                 value={tempWeight}
-                onChange={e=>setTempWeight(e.target.value)}
+                onChange={(e) => setTempWeight(e.target.value)}
               />
               <button onClick={addWeightLog}>Log</button>
             </>
           )}
           <Line data={graphData} />
           <ul>
-            {weightLog.map((w,i)=>(
-              <li key={i} style={{ marginBottom:6 }}>
-                {weightEditingIndex===i ? null : (
+            {weightLog.map((w, i) => (
+              <li key={i} style={{ marginBottom: 6 }}>
+                {weightEditingIndex === i ? null : (
                   <>
                     {w.date}: {w.weight} lb{" "}
-                    <button onClick={()=>startEditWeight(i)}>✏️</button>{" "}
-                    <button onClick={()=>deleteWeight(i)}>✖️</button>
+                    <button onClick={() => startEditWeight(i)}>✏️</button>{" "}
+                    <button onClick={() => deleteWeight(i)}>✖️</button>
                   </>
                 )}
               </li>
@@ -551,20 +640,41 @@ function App() {
         </>
       )}
 
-      <div style={{
-        position:"fixed", bottom:0, left:0, right:0,
-        display:"flex", justifyContent:"space-around",
-        background:"#fff", borderTop:"1px solid #ccc", height:60, boxShadow:"0 -1px 5px rgba(0,0,0,0.1)"
-      }}>
-        <button style={navBtnStyle(screen==="home")} onClick={()=>setScreen("home")}>🏠 Home</button>
-        <button style={navBtnStyle(screen==="food")} onClick={()=>setScreen("food")}>🍽️ Food</button>
-        <button style={navBtnStyle(screen==="weight")} onClick={()=>setScreen("weight")}>⚖️ Weight</button>
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "space-around",
+          background: "#fff",
+          borderTop: "1px solid #ccc",
+          height: 60,
+          boxShadow: "0 -1px 5px rgba(0,0,0,0.1)",
+        }}
+      >
+        <button
+          style={navBtnStyle(screen === "home")}
+          onClick={() => setScreen("home")}
+        >
+          🏠 Home
+        </button>
+        <button
+          style={navBtnStyle(screen === "food")}
+          onClick={() => setScreen("food")}
+        >
+          🍽️ Food
+        </button>
+        <button
+          style={navBtnStyle(screen === "weight")}
+          onClick={() => setScreen("weight")}
+        >
+          ⚖️ Weight
+        </button>
       </div>
     </div>
   );
 }
 
-// ── PROGRESS BAR COMPONENT ─────────────────────────────────────────────────
-const ProgressBar = ({ value, goal, color, label }) => (
-  <>
-    <div style={{ height: 20, background: "#eee", borderRadius:
+export default App;
