@@ -197,7 +197,11 @@ function App() {
     const [kcal, prot] = values.replace(/kcal|protein/g, "").split("/");
     setFoodLog((f) => [
       ...f,
-      { name: namePart, cal: +kcal.trim(), prot: +prot.trim() },
+      {
+        name: namePart,
+        cal: parseFloat(kcal.trim()),
+        prot: parseFloat(prot.trim()),
+      },
     ]);
     setSearch("");
     setFoodList([]);
@@ -229,7 +233,11 @@ function App() {
     setFoodLog((f) =>
       f.map((item, idx) =>
         idx === i
-          ? { name: tempFood.name, cal: +tempFood.cal, prot: +tempFood.prot }
+          ? {
+              name: tempFood.name,
+              cal: parseFloat(tempFood.cal),
+              prot: parseFloat(tempFood.prot),
+            }
           : item
       )
     );
