@@ -97,6 +97,9 @@ const volumeUnits = [
   { label: "Tsp", factor: 1 / 48 },
 ];
 
+// regex to allow only digits and at most one decimal point
+const DECIMAL_REGEX = /^\d*\.?\d*$/;
+
 // ── Unified FoodLogger ───────────────────────────────────────────────────
 function FoodLogger({ foodLog, setFoodLog }) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -122,7 +125,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
   };
 
   const handleAdd = () => {
-    if (!selectedFood || !value) return;
+    if (!selectedFood || value === "") return;
     const amt = parseFloat(value);
     let cal = 0,
       prot = 0;
@@ -184,7 +187,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
           value={measurementType}
           onChange={(e) => {
             setMeasurementType(e.target.value);
-            setUnit(e.target.value === "volume" ? "Cups" : "Cups");
+            setUnit("Cups");
             setSelectedFood(null);
             setSearchTerm("");
           }}
@@ -202,17 +205,17 @@ function FoodLogger({ foodLog, setFoodLog }) {
           </select>
         )}
 
-        {/* Numeric-only Amount */}
+        {/* Decimal-allowed Amount */}
         <input
           type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
+          inputMode="decimal"
+          pattern="\d*\.?\d*"
           placeholder="Amount"
           style={{ width: 80 }}
           value={value}
           onChange={(e) => {
             const raw = e.target.value;
-            if (/^\d*$/.test(raw)) {
+            if (DECIMAL_REGEX.test(raw)) {
               setValue(raw);
             }
           }}
@@ -508,28 +511,28 @@ export default function App() {
             value={customName}
             onChange={(e) => setCustomName(e.target.value)}
           />
-          {/* Numeric-only Calories */}
+          {/* Decimal-allowed Calories */}
           <input
             placeholder="Calories"
             type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="decimal"
+            pattern="\d*\.?\d*"
             value={customCal}
             onChange={(e) => {
               const raw = e.target.value;
-              if (/^\d*$/.test(raw)) setCustomCal(raw);
+              if (DECIMAL_REGEX.test(raw)) setCustomCal(raw);
             }}
           />
-          {/* Numeric-only Protein */}
+          {/* Decimal-allowed Protein */}
           <input
             placeholder="Protein"
             type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="decimal"
+            pattern="\d*\.?\d*"
             value={customProt}
             onChange={(e) => {
               const raw = e.target.value;
-              if (/^\d*$/.test(raw)) setCustomProt(raw);
+              if (DECIMAL_REGEX.test(raw)) setCustomProt(raw);
             }}
           />
           <button onClick={addCustomFood}>Add</button>
