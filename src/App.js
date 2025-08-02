@@ -10,6 +10,23 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
 
+// ── Simple reusable info button ──────────────────────────────────────────
+const InfoButton = ({ message }) => (
+  <span
+    onClick={() => alert(message)}
+    style={{
+      marginLeft: 6,
+      cursor: "pointer",
+      color: "#0070f3",
+      fontWeight: "bold",
+      userSelect: "none",
+    }}
+    title="More info"
+  >
+    ⓘ
+  </span>
+);
+
 function App() {
   // ── LOCAL DATE ───────────────────────────────────────────────────────────
   const today = (() => {
@@ -56,20 +73,20 @@ function App() {
   const [tempWeight, setTempWeight] = useState("");
 
   // ── NEW FOOD‐SEARCH & UNITS ─────────────────────────────────────────────
-  // Count‐based
+  // 1) Count‐based
   const countFoods = [
     { name: "Apple", cal: 95, prot: 1 },
     { name: "Banana", cal: 105, prot: 1.3 },
     { name: "Egg", cal: 70, prot: 6 },
     { name: "Avocado", cal: 240, prot: 3 },
     { name: "Walnut", cal: 26, prot: 0.6 },
-    { name: "Strawberry", cal: 4, prot: 0.1 }
+    { name: "Strawberry", cal: 4, prot: 0.1 },
   ];
   const [searchCount, setSearchCount] = useState("");
   const [selectedCountFood, setSelectedCountFood] = useState(null);
   const [countValue, setCountValue] = useState("");
 
-  // Weight‐based (grams)
+  // 2) Weight‐based (grams)
   const weightFoods = [
     { name: "Chicken breast", calPer100g: 165, protPer100g: 31 },
     { name: "Salmon", calPer100g: 206, protPer100g: 22 },
@@ -84,7 +101,7 @@ function App() {
   const [selectedWeightFood, setSelectedWeightFood] = useState(null);
   const [gramValue, setGramValue] = useState("");
 
-  // Volume‐based (cups / tbsp / tsp)
+  // 3) Volume‐based (cups / tbsp / tsp)
   const volumeFoods = [
     { name: "Oats (dry)", calPerCup: 307, protPerCup: 11 },
     { name: "Chia seeds", calPerCup: 778, protPerCup: 28 },
@@ -163,11 +180,13 @@ function App() {
     if (!selectedCountFood || !countValue) return;
     const cal = selectedCountFood.cal * +countValue;
     const prot = selectedCountFood.prot * +countValue;
-    setFoodLog(f => [
+    setFoodLog((f) => [
       ...f,
       { name: `${countValue}× ${selectedCountFood.name}`, cal, prot },
     ]);
-    setCountValue(""); setSelectedCountFood(null); setSearchCount("");
+    setCountValue("");
+    setSelectedCountFood(null);
+    setSearchCount("");
   };
 
   // 2) WEIGHT
@@ -176,25 +195,33 @@ function App() {
     const factor = +gramValue / 100;
     const cal = selectedWeightFood.calPer100g * factor;
     const prot = selectedWeightFood.protPer100g * factor;
-    setFoodLog(f => [
+    setFoodLog((f) => [
       ...f,
       { name: `${gramValue}g ${selectedWeightFood.name}`, cal, prot },
     ]);
-    setGramValue(""); setSelectedWeightFood(null); setSearchWeight("");
+    setGramValue("");
+    setSelectedWeightFood(null);
+    setSearchWeight("");
   };
 
   // 3) VOLUME
   const handleAddVolume = () => {
     if (!selectedVolumeFood || !volumeValue) return;
-    const unit = volumeUnits.find(u => u.label === volumeUnit);
+    const unit = volumeUnits.find((u) => u.label === volumeUnit);
     const factor = unit.factor * +volumeValue;
     const cal = selectedVolumeFood.calPerCup * factor;
     const prot = selectedVolumeFood.protPerCup * factor;
-    setFoodLog(f => [
+    setFoodLog((f) => [
       ...f,
-      { name: `${volumeValue} ${volumeUnit} ${selectedVolumeFood.name}`, cal, prot },
+      {
+        name: `${volumeValue} ${volumeUnit} ${selectedVolumeFood.name}`,
+        cal,
+        prot,
+      },
     ]);
-    setVolumeValue(""); setSelectedVolumeFood(null); setSearchVolume("");
+    setVolumeValue("");
+    setSelectedVolumeFood(null);
+    setSearchVolume("");
   };
 
   // 4) CUSTOM
@@ -205,21 +232,20 @@ function App() {
       alert("Enter name and valid calories.");
       return;
     }
-    setFoodLog(f => [
-      ...f,
-      { name: customName, cal: cals, prot: pro },
-    ]);
-    setCustomName(""); setCustomCal(""); setCustomProt("");
+    setFoodLog((f) => [...f, { name: customName, cal: cals, prot: pro }]);
+    setCustomName("");
+    setCustomCal("");
+    setCustomProt("");
   };
 
   // EDIT / DELETE FOOD
-  const startEditFood = i => {
+  const startEditFood = (i) => {
     const it = foodLog[i];
     setFoodEditingIndex(i);
     setTempFood({ name: it.name, cal: it.cal, prot: it.prot });
   };
-  const saveEditFood = i => {
-    setFoodLog(f =>
+  const saveEditFood = (i) => {
+    setFoodLog((f) =>
       f.map((it, idx) =>
         idx === i
           ? { name: tempFood.name, cal: +tempFood.cal, prot: +tempFood.prot }
@@ -229,24 +255,24 @@ function App() {
     setFoodEditingIndex(null);
   };
   const cancelEditFood = () => setFoodEditingIndex(null);
-  const removeFood = i =>
-    setFoodLog(f => f.filter((_, idx) => idx !== i));
+  const removeFood = (i) =>
+    setFoodLog((f) => f.filter((_, idx) => idx !== i));
 
-  // WEIGHT TRACK handlers unchanged...
+  // WEIGHT TRACK handlers unchanged…
   const addWeightLog = () => {
     const w = parseFloat(tempWeight);
     if (!isNaN(w)) {
       const entry = { date: today, weight: w };
-      setWeightLog(prev => [...prev, entry]);
+      setWeightLog((prev) => [...prev, entry]);
       setTempWeight("");
     }
   };
-  const startEditWeight = i => {
+  const startEditWeight = (i) => {
     setWeightEditingIndex(i);
     setTempWeight(weightLog[i].weight.toString());
   };
-  const saveEditWeight = i => {
-    setWeightLog(w =>
+  const saveEditWeight = (i) => {
+    setWeightLog((w) =>
       w.map((e, idx) =>
         idx === i ? { ...e, weight: parseFloat(tempWeight) } : e
       )
@@ -254,8 +280,8 @@ function App() {
     setWeightEditingIndex(null);
   };
   const cancelEditWeight = () => setWeightEditingIndex(null);
-  const deleteWeight = i =>
-    setWeightLog(w => w.filter((_, idx) => idx !== i));
+  const deleteWeight = (i) =>
+    setWeightLog((w) => w.filter((_, idx) => idx !== i));
 
   const resetDay = () => {
     setFoodLog([]);
@@ -282,13 +308,13 @@ function App() {
   );
 
   const graphData = {
-    labels: weightLog.map(w => w.date),
+    labels: weightLog.map((w) => w.date),
     datasets: [
-      { label: "Weight (lbs)", data: weightLog.map(w => w.weight), fill: false, borderColor: "blue", tension: 0.1 },
+      { label: "Weight (lbs)", data: weightLog.map((w) => w.weight), fill: false, borderColor: "blue", tension: 0.1 },
     ],
   };
 
-  const navBtnStyle = active => ({
+  const navBtnStyle = (active) => ({
     flex: 1, padding: 10, fontSize: 16,
     background: "none", border: "none",
     fontWeight: active ? "bold" : "normal",
@@ -301,124 +327,273 @@ function App() {
       <div style={{ padding: 24 }}>
         <h2>The 500 Plan</h2>
         <p>Track food. Hit your goals. Lose a pound a week.</p>
-        <label>Sex:{" "}
-          <select value={sex} onChange={e => setSex(e.target.value)}>
-            <option>male</option><option>female</option>
+        <label>
+          Sex:{" "}
+          <select value={sex} onChange={(e) => setSex(e.target.value)}>
+            <option>male</option>
+            <option>female</option>
           </select>
-        </label><br/>
-        <label>Age: <input value={age} onChange={e => setAge(e.target.value)} /></label><br/>
-        <label>Height (in): <input value={height} onChange={e => setHeight(e.target.value)} /></label><br/>
-        <label>Weight (lbs): <input value={weight} onChange={e => setWeight(e.target.value)} /></label><br/>
-        <button onClick={finishOnboarding}>Save & Start</button>
+        </label>
+        <br />
+        <label>Age: <input value={age} onChange={(e) => setAge(e.target.value)} /></label><br/>
+        <label>Height (in): <input value={height} onChange={(e) => setHeight(e.target.value)} /></label><br/>
+        <label>Weight (lbs): <input value={weight} onChange={(e) => setWeight(e.target.value)} /></label><br/>
+        <button onClick={finishOnboarding}>Save &amp; Start</button>
       </div>
     );
   }
 
   return (
-    <div style={{ padding:24, paddingBottom:80, maxWidth:500, margin:"auto", fontFamily:"sans-serif" }}>
-      <div style={{ display:"flex", justifyContent:"space-between" }}>
+    <div
+      style={{
+        padding: 24,
+        paddingBottom: 80,
+        maxWidth: 500,
+        margin: "auto",
+        fontFamily: "sans-serif",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2>The 500 Plan</h2>
-        <button onClick={() => { localStorage.removeItem("onboardingComplete"); setEditingProfile(true); }}>⚙️</button>
+        <button
+          onClick={() => {
+            localStorage.removeItem("onboardingComplete");
+            setEditingProfile(true);
+          }}
+        >
+          ⚙️
+        </button>
       </div>
 
       {screen === "home" && (
         <>
-          <h3>Calories ⓘ</h3>
-          <ProgressBar value={calsToday} goal={calorieGoal} color="#2196f3"
-            label={`${calsToday} / ${calorieGoal} kcal`} />
-          <h3>Protein ⓘ</h3>
-          <ProgressBar value={proteinToday} goal={proteinGoal} color="#4caf50"
-            label={`${proteinToday} / ${proteinGoal} g`} />
-          <h3>Steps ⓘ</h3>
+          <h3>
+            Calories
+            <InfoButton
+              message={
+                "Your BMR (Basal Metabolic Rate) is the number of calories your body burns at rest—basically, what you’d burn if you spent all day in bed. We subtract 500 kcal from your BMR to create a safe, sustainable daily deficit that leads to about one pound of fat loss per week."
+              }
+            />
+          </h3>
+          <ProgressBar
+            value={calsToday}
+            goal={calorieGoal}
+            color="#2196f3"
+            label={`${calsToday} / ${calorieGoal} kcal`}
+          />
+
+          <h3>
+            Protein
+            <InfoButton
+              message={
+                "Protein is the building block for muscles, organs, and even your skin and hair. When you’re in a calorie deficit, getting enough protein helps preserve lean muscle mass and keeps you feeling full. We recommend resistance training alongside the 500 Plan so that the calories you do eat go toward maintaining and building muscle."
+              }
+            />
+          </h3>
+          <ProgressBar
+            value={proteinToday}
+            goal={proteinGoal}
+            color="#4caf50"
+            label={`${proteinToday} / ${proteinGoal} g`}
+          />
+
+          <h3>
+            Steps
+            <InfoButton
+              message={
+                "Walking is one of the easiest ways to burn extra calories without draining your energy. A target of 10,000 steps adds roughly 300–500 cal of burn per day—making your overall deficit that much more attainable and giving your metabolism a gentle boost."
+              }
+            />
+          </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
-          <input value={steps} onChange={e => setSteps(Math.max(0, +e.target.value))} />
+          <input
+            value={steps}
+            onChange={(e) => setSteps(Math.max(0, +e.target.value))}
+          />
           <p>+{caloriesFromSteps} cal from steps</p>
-          <button onClick={resetDay} style={{ marginTop:10, background:"#000", color:"#fff", padding:10, borderRadius:5 }}>🔄 Reset Day</button>
+          <button
+            onClick={resetDay}
+            style={{
+              marginTop: 10,
+              background: "#000",
+              color: "#fff",
+              padding: 10,
+              borderRadius: 5,
+            }}
+          >
+            🔄 Reset Day
+          </button>
         </>
       )}
 
       {screen === "food" && (
         <>
-          <h3>Food</h3>
+          <h3>
+            Food
+            <InfoButton
+              message={
+                "We provide three preset tracking modes—by count, by weight (g), and by volume—to make logging whole, fat-loss–friendly foods quick and accurate. If your food isn't listed, use Custom Entry. This keeps you on track with our curated list; anything else must be entered manually."
+              }
+            />
+          </h3>
 
           {/* 1) COUNT */}
           <h4>By Count</h4>
-          <input placeholder="Search…" value={searchCount} onChange={e => setSearchCount(e.target.value)} />
+          <input
+            placeholder="Search…"
+            value={searchCount}
+            onChange={(e) => setSearchCount(e.target.value)}
+          />
           <select
             value={selectedCountFood ? selectedCountFood.name : ""}
-            onChange={e => {
-              const f = countFoods.find(f=>f.name===e.target.value);
-              setSelectedCountFood(f||null);
+            onChange={(e) => {
+              const f = countFoods.find((f) => f.name === e.target.value);
+              setSelectedCountFood(f || null);
             }}
           >
             <option value="">Select food</option>
-            {countFoods.filter(f=>f.name.toLowerCase().includes(searchCount.toLowerCase()))
-              .map((f,i)=><option key={i}>{f.name}</option>)}
+            {countFoods
+              .filter((f) =>
+                f.name.toLowerCase().includes(searchCount.toLowerCase())
+              )
+              .map((f, i) => (
+                <option key={i}>{f.name}</option>
+              ))}
           </select>
-          <input type="number" placeholder="How many?" value={countValue} onChange={e=>setCountValue(e.target.value)} />
+          <input
+            type="number"
+            placeholder="How many?"
+            value={countValue}
+            onChange={(e) => setCountValue(e.target.value)}
+          />
           <button onClick={handleAddCount}>Add</button>
 
           {/* 2) WEIGHT */}
           <h4>By Weight (g)</h4>
-          <input placeholder="Search…" value={searchWeight} onChange={e => setSearchWeight(e.target.value)} />
+          <input
+            placeholder="Search…"
+            value={searchWeight}
+            onChange={(e) => setSearchWeight(e.target.value)}
+          />
           <select
             value={selectedWeightFood ? selectedWeightFood.name : ""}
-            onChange={e => {
-              const f = weightFoods.find(f=>f.name===e.target.value);
-              setSelectedWeightFood(f||null);
+            onChange={(e) => {
+              const f = weightFoods.find((f) => f.name === e.target.value);
+              setSelectedWeightFood(f || null);
             }}
           >
             <option value="">Select food</option>
-            {weightFoods.filter(f=>f.name.toLowerCase().includes(searchWeight.toLowerCase()))
-              .map((f,i)=><option key={i}>{f.name}</option>)}
+            {weightFoods
+              .filter((f) =>
+                f.name.toLowerCase().includes(searchWeight.toLowerCase())
+              )
+              .map((f, i) => (
+                <option key={i}>{f.name}</option>
+              ))}
           </select>
-          <input type="number" placeholder="Grams" value={gramValue} onChange={e=>setGramValue(e.target.value)} />
+          <input
+            type="number"
+            placeholder="Grams"
+            value={gramValue}
+            onChange={(e) => setGramValue(e.target.value)}
+          />
           <button onClick={handleAddWeight}>Add</button>
 
           {/* 3) VOLUME */}
           <h4>By Volume</h4>
-          <input placeholder="Search…" value={searchVolume} onChange={e => setSearchVolume(e.target.value)} />
+          <input
+            placeholder="Search…"
+            value={searchVolume}
+            onChange={(e) => setSearchVolume(e.target.value)}
+          />
           <select
             value={selectedVolumeFood ? selectedVolumeFood.name : ""}
-            onChange={e => {
-              const f = volumeFoods.find(f=>f.name===e.target.value);
-              setSelectedVolumeFood(f||null);
+            onChange={(e) => {
+              const f = volumeFoods.find((f) => f.name === e.target.value);
+              setSelectedVolumeFood(f || null);
             }}
           >
             <option value="">Select food</option>
-            {volumeFoods.filter(f=>f.name.toLowerCase().includes(searchVolume.toLowerCase()))
-              .map((f,i)=><option key={i}>{f.name}</option>)}
+            {volumeFoods
+              .filter((f) =>
+                f.name.toLowerCase().includes(searchVolume.toLowerCase())
+              )
+              .map((f, i) => (
+                <option key={i}>{f.name}</option>
+              ))}
           </select>
-          <input type="number" placeholder="Amount" value={volumeValue} onChange={e=>setVolumeValue(e.target.value)} />
-          <select value={volumeUnit} onChange={e=>setVolumeUnit(e.target.value)}>
-            {volumeUnits.map(u=> <option key={u.label}>{u.label}</option>)}
+          <input
+            type="number"
+            placeholder="Amount"
+            value={volumeValue}
+            onChange={(e) => setVolumeValue(e.target.value)}
+          />
+          <select
+            value={volumeUnit}
+            onChange={(e) => setVolumeUnit(e.target.value)}
+          >
+            {volumeUnits.map((u) => (
+              <option key={u.label}>{u.label}</option>
+            ))}
           </select>
           <button onClick={handleAddVolume}>Add</button>
 
           {/* 4) CUSTOM */}
           <h4>Custom Entry</h4>
-          <input placeholder="Name" value={customName} onChange={e=>setCustomName(e.target.value)} />
-          <input placeholder="Calories" type="number" value={customCal} onChange={e=>setCustomCal(e.target.value)} />
-          <input placeholder="Protein" type="number" value={customProt} onChange={e=>setCustomProt(e.target.value)} />
+          <input
+            placeholder="Name"
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+          />
+          <input
+            placeholder="Calories"
+            type="number"
+            value={customCal}
+            onChange={(e) => setCustomCal(e.target.value)}
+          />
+          <input
+            placeholder="Protein"
+            type="number"
+            value={customProt}
+            onChange={(e) => setCustomProt(e.target.value)}
+          />
           <button onClick={addCustomFood}>Add</button>
 
           <h4>Logged Foods</h4>
           <ul>
             {foodLog.map((it, i) => (
-              <li key={i} style={{ marginBottom:6 }}>
-                {foodEditingIndex===i ? (
+              <li key={i} style={{ marginBottom: 6 }}>
+                {foodEditingIndex === i ? (
                   <>
-                    <input value={tempFood.name} onChange={e=>setTempFood(t=>({...t,name:e.target.value}))}/>
-                    <input value={tempFood.cal} type="number" onChange={e=>setTempFood(t=>({...t,cal:e.target.value}))}/>
-                    <input value={tempFood.prot} type="number" onChange={e=>setTempFood(t=>({...t,prot:e.target.value}))}/>
-                    <button onClick={()=>saveEditFood(i)}>Save</button>
+                    <input
+                      value={tempFood.name}
+                      onChange={(e) =>
+                        setTempFood((t) => ({ ...t, name: e.target.value }))
+                      }
+                    />
+                    <input
+                      value={tempFood.cal}
+                      type="number"
+                      onChange={(e) =>
+                        setTempFood((t) => ({ ...t, cal: e.target.value }))
+                      }
+                    />
+                    <input
+                      value={tempFood.prot}
+                      type="number"
+                      onChange={(e) =>
+                        setTempFood((t) => ({ ...t, prot: e.target.value }))
+                      }
+                    />
+                    <button onClick={() => saveEditFood(i)}>Save</button>
                     <button onClick={cancelEditFood}>Cancel</button>
                   </>
                 ) : (
                   <>
-                    {it.name} — {it.cal.toFixed(1)} kcal / {it.prot.toFixed(1)}g protein{" "}
-                    <button onClick={()=>startEditFood(i)}>✏️</button>{" "}
-                    <button onClick={()=>removeFood(i)}>✖️</button>
+                    {it.name} — {it.cal.toFixed(1)} kcal /{" "}
+                    {it.prot.toFixed(1)}g protein{" "}
+                    <button onClick={() => startEditFood(i)}>✏️</button>{" "}
+                    <button onClick={() => removeFood(i)}>✖️</button>
                   </>
                 )}
               </li>
@@ -430,27 +605,36 @@ function App() {
       {screen === "weight" && (
         <>
           <h3>Track Weight</h3>
-          {weightEditingIndex!==null ? (
+          {weightEditingIndex !== null ? (
             <>
-              <input value={tempWeight} onChange={e=>setTempWeight(e.target.value)}/>
-              <button onClick={()=>saveEditWeight(weightEditingIndex)}>Save</button>
+              <input
+                value={tempWeight}
+                onChange={(e) => setTempWeight(e.target.value)}
+              />
+              <button onClick={() => saveEditWeight(weightEditingIndex)}>
+                Save
+              </button>
               <button onClick={cancelEditWeight}>Cancel</button>
             </>
           ) : (
             <>
-              <input placeholder="Today's weight" value={tempWeight} onChange={e=>setTempWeight(e.target.value)}/>
+              <input
+                placeholder="Today's weight"
+                value={tempWeight}
+                onChange={(e) => setTempWeight(e.target.value)}
+              />
               <button onClick={addWeightLog}>Log</button>
             </>
           )}
-          <Line data={graphData}/>
+          <Line data={graphData} />
           <ul>
-            {weightLog.map((w,i)=>(
-              <li key={i} style={{ marginBottom:6 }}>
-                {weightEditingIndex===i ? null : (
+            {weightLog.map((w, i) => (
+              <li key={i} style={{ marginBottom: 6 }}>
+                {weightEditingIndex === i ? null : (
                   <>
                     {w.date}: {w.weight} lb{" "}
-                    <button onClick={()=>startEditWeight(i)}>✏️</button>{" "}
-                    <button onClick={()=>deleteWeight(i)}>✖️</button>
+                    <button onClick={() => startEditWeight(i)}>✏️</button>{" "}
+                    <button onClick={() => deleteWeight(i)}>✖️</button>
                   </>
                 )}
               </li>
@@ -459,14 +643,38 @@ function App() {
         </>
       )}
 
-      <div style={{
-        position:"fixed", bottom:0, left:0, right:0,
-        display:"flex", justifyContent:"space-around",
-        background:"#fff", borderTop:"1px solid #ccc", height:60, boxShadow:"0 -1px 5px rgba(0,0,0,0.1)"
-      }}>
-        <button style={navBtnStyle(screen==="home")} onClick={()=>setScreen("home")}>🏠 Home</button>
-        <button style={navBtnStyle(screen==="food")} onClick={()=>setScreen("food")}>🍽️ Food</button>
-        <button style={navBtnStyle(screen==="weight")} onClick={()=>setScreen("weight")}>⚖️ Weight</button>
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: "flex",
+          justifyContent: "space-around",
+          background: "#fff",
+          borderTop: "1px solid #ccc",
+          height: 60,
+          boxShadow: "0 -1px 5px rgba(0,0,0,0.1)",
+        }}
+      >
+        <button
+          style={navBtnStyle(screen === "home")}
+          onClick={() => setScreen("home")}
+        >
+          🏠 Home
+        </button>
+        <button
+          style={navBtnStyle(screen === "food")}
+          onClick={() => setScreen("food")}
+        >
+          🍽️ Food
+        </button>
+        <button
+          style={navBtnStyle(screen === "weight")}
+          onClick={() => setScreen("weight")}
+        >
+          ⚖️ Weight
+        </button>
       </div>
     </div>
   );
