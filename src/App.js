@@ -325,6 +325,8 @@ export default function App() {
   // Calculations
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
+  // round protein to 2 decimal places
+  const proteinRounded = Math.round(proteinToday * 100) / 100;
   const caloriesFromSteps = Math.round(steps * 0.04);
   const bmr = () => {
     const h = parseInt(height, 10),
@@ -408,10 +410,9 @@ export default function App() {
   };
   const saveEditWeight = (i) => {
     setWeightLog((w) =>
-      w
-        .map((e, idx) =>
-          idx === i ? { ...e, weight: parseFloat(tempWeight) } : e
-        )
+      w.map((e, idx) =>
+        idx === i ? { ...e, weight: parseFloat(tempWeight) } : e
+      )
     );
     setWeightEditingIndex(null);
   };
@@ -450,8 +451,7 @@ export default function App() {
         </label>
         <br />
         <label>
-          Weight (lbs):{" "}
-          <input value={weight} onChange={(e) => setWeight(e.target.value)} />
+          Weight (lbs):{" "}<input value={weight} onChange={(e) => setWeight(e.target.value)} />
         </label>
         <br />
         <button onClick={finishOnboarding}>Save & Start</button>
@@ -497,10 +497,10 @@ export default function App() {
             <InfoButton message="Protein preserves muscle during a deficit and keeps you full." />
           </h3>
           <ProgressBar
-            value={proteinToday}
+            value={proteinRounded}
             goal={proteinGoal}
             color="#4caf50"
-            label={`${proteinToday} / ${proteinGoal} g`}
+            label={`${proteinRounded.toFixed(2)} / ${proteinGoal} g`}
           />
 
           <h3>
