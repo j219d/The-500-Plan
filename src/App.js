@@ -96,8 +96,6 @@ function App() {
   })();
 
   const [screen, setScreen] = useState("home");
-
-  // ── ONBOARDING ──────────────────────────────────────────────────────────
   const [editingProfile, setEditingProfile] = useState(
     () => localStorage.getItem("onboardingComplete") !== "true"
   );
@@ -128,7 +126,6 @@ function App() {
   // ── EDIT STATE ──────────────────────────────────────────────────────────
   const [foodEditingIndex, setFoodEditingIndex] = useState(null);
   const [tempFood, setTempFood] = useState({ name: "", cal: "", prot: "" });
-
   const [weightEditingIndex, setWeightEditingIndex] = useState(null);
   const [tempWeight, setTempWeight] = useState("");
 
@@ -174,9 +171,15 @@ function App() {
   useEffect(() => {
     localStorage.setItem(`foodLog-${today}`, JSON.stringify(foodLog));
   }, [foodLog]);
+
   useEffect(() => {
     localStorage.setItem(`steps-${today}`, steps.toString());
   }, [steps]);
+
+  // ← NEW: persist weightLog on every change
+  useEffect(() => {
+    localStorage.setItem("weightLog", JSON.stringify(weightLog));
+  }, [weightLog]);
 
   // ── LIVE SEARCH ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -215,10 +218,7 @@ function App() {
       return;
     }
     if (isNaN(pro)) pro = 0;
-    setFoodLog((f) => [
-      ...f,
-      { name: customName, cal: cals, prot: pro },
-    ]);
+    setFoodLog((f) => [...f, { name: customName, cal: cals, prot: pro }]);
     setCustomName("");
     setCustomCal("");
     setCustomProt("");
@@ -243,9 +243,7 @@ function App() {
     );
     setFoodEditingIndex(null);
   };
-  const cancelEditFood = () => {
-    setFoodEditingIndex(null);
-  };
+  const cancelEditFood = () => setFoodEditingIndex(null);
   const removeFood = (i) => setFoodLog((f) => f.filter((_, idx) => idx !== i));
 
   const addWeight = () => {
@@ -253,10 +251,6 @@ function App() {
     if (!isNaN(w)) {
       const entry = { date: today, weight: w };
       setWeightLog((prev) => [...prev, entry]);
-      localStorage.setItem(
-        "weightLog",
-        JSON.stringify([...weightLog, entry])
-      );
       setTempWeight("");
     }
   };
@@ -271,7 +265,6 @@ function App() {
         idx === i ? { ...entry, weight: parseFloat(tempWeight) } : entry
       )
     );
-    localStorage.setItem("weightLog", JSON.stringify(weightLog));
     setWeightEditingIndex(null);
   };
   const cancelEditWeight = () => setWeightEditingIndex(null);
@@ -329,7 +322,6 @@ function App() {
     background: "none",
     border: "none",
     fontWeight: active ? "bold" : "normal",
-    filter: "none",
     cursor: "pointer",
   });
 
@@ -353,18 +345,12 @@ function App() {
         <br />
         <label>
           Height (inches):{" "}
-          <input
-            value={height}
-            onChange={(e) => setHeight(e.target.value)}
-          />
+          <input value={height} onChange={(e) => setHeight(e.target.value)} />
         </label>
         <br />
         <label>
           Weight (lbs):{" "}
-          <input
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-          />
+          <input value={weight} onChange={(e) => setWeight(e.target.value)} />
         </label>
         <br />
         <button onClick={finishOnboarding}>Save & Start</button>
