@@ -28,7 +28,7 @@ const InfoButton = ({ message }) => (
   </span>
 );
 
-// ── Progress bar ─────────────────────────────────────────────────────────
+// ── Standard Progress bar (for protein & steps) ──────────────────────────
 const ProgressBar = ({ value, goal, color, label }) => (
   <>
     <div
@@ -51,6 +51,56 @@ const ProgressBar = ({ value, goal, color, label }) => (
     {label && <p>{label}</p>}
   </>
 );
+
+// ── CalorieBar: inverted remaining-calories bar ──────────────────────────
+const CalorieBar = ({ consumed, goal }) => {
+  const remaining = goal - consumed;
+  const pct = Math.max((remaining / goal) * 100, 0);
+  const overflowPct = remaining < 0
+    ? Math.min((-remaining / goal) * 100, 100)
+    : 0;
+
+  return (
+    <>
+      <div
+        style={{
+          position: "relative",
+          height: 20,
+          background: "#eee",
+          borderRadius: 10,
+          overflow: "hidden",
+        }}
+      >
+        {/* Remaining portion */}
+        <div
+          style={{
+            width: `${pct}%`,
+            background: "#2196f3",
+            height: "100%",
+            transition: "width 0.3s ease",
+          }}
+        />
+        {/* Red overflow if over goal */}
+        {overflowPct > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              right: 0,
+              width: `${overflowPct}%`,
+              background: "#e53935",
+              height: "100%",
+            }}
+          />
+        )}
+      </div>
+      <p>
+        {remaining >= 0
+          ? `${remaining.toFixed(0)} kcal remaining`
+          : `Over by ${(-remaining).toFixed(0)} kcal!`}
+      </p>
+    </>
+  );
+};
 
 // ── Bottom nav button style ──────────────────────────────────────────────
 const navBtnStyle = (active) => ({
@@ -147,11 +197,9 @@ function FoodLogger({ foodLog, setFoodLog }) {
     setFoodLog((f) => [
       ...f,
       {
-        name: `${value}${
-          measurementType === "count" ? "× " : " "
-        }${selectedFood.name}${
-          measurementType === "volume" ? " " + unit : ""
-        }`,
+        name: `${value}${measurementType === "count" ? "× " : " "}${
+          selectedFood.name
+        }${measurementType === "volume" ? " " + unit : ""}`,
         cal,
         prot,
       },
@@ -205,7 +253,6 @@ function FoodLogger({ foodLog, setFoodLog }) {
           </select>
         )}
 
-        {/* Decimal-allowed Amount */}
         <input
           type="text"
           inputMode="decimal"
@@ -361,9 +408,10 @@ export default function App() {
   };
   const saveEditWeight = (i) => {
     setWeightLog((w) =>
-      w.map((e, idx) =>
-        idx === i ? { ...e, weight: parseFloat(tempWeight) } : e
-      )
+      w
+        .map((e, idx) =>
+          idx === i ? { ...e, weight: parseFloat(tempWeight) } : e
+        )
     );
     setWeightEditingIndex(null);
   };
@@ -378,7 +426,7 @@ export default function App() {
     localStorage.removeItem(`steps-${today}`);
   };
 
-  // ── Onboarding ─────────────────────────────────────────────────────────
+  // Onboarding screen
   if (editingProfile) {
     return (
       <div style={{ padding: 24 }}>
@@ -406,12 +454,12 @@ export default function App() {
           <input value={weight} onChange={(e) => setWeight(e.target.value)} />
         </label>
         <br />
-        <button onClick={finishOnboarding}>Save &amp; Start</button>
+        <button onClick={finishOnboarding}>Save & Start</button>
       </div>
     );
   }
 
-  // ── Main UI ─────────────────────────────────────────────────────────────
+  // Main UI
   return (
     <div
       style={{
@@ -439,17 +487,14 @@ export default function App() {
       {screen === "home" && (
         <>
           <h3>
-            Calories<InfoButton message="Your BMR (Basal Metabolic Rate) is the number of calories your body burns at rest—basically, what you’d burn if you spent all day in bed. We subtract 500 kcal from your BMR to create a safe, sustainable daily deficit that leads to about one pound of fat loss per week." />
+            Calories
+            <InfoButton message="Your BMR is what you’d burn at rest. We subtract 500 kcal for a safe deficit." />
           </h3>
-          <ProgressBar
-            value={calsToday}
-            goal={calorieGoal}
-            color="#2196f3"
-            label={`${calsToday} / ${calorieGoal} kcal`}
-          />
+          <CalorieBar consumed={calsToday} goal={calorieGoal} />
 
           <h3>
-            Protein<InfoButton message="Protein is the building block for muscles, organs, and even your skin and hair. When you’re in a calorie deficit, getting enough protein helps preserve lean muscle mass and keeps you feeling full. We recommend resistance training alongside the 500 Plan so that the calories you do eat go toward maintaining and building muscle." />
+            Protein
+            <InfoButton message="Protein preserves muscle during a deficit and keeps you full." />
           </h3>
           <ProgressBar
             value={proteinToday}
@@ -459,7 +504,8 @@ export default function App() {
           />
 
           <h3>
-            Steps<InfoButton message="Walking is one of the easiest ways to burn extra calories without draining your energy. A target of 10,000 steps adds roughly 300–500 cal of burn per day—making your overall deficit that much more attainable and giving your metabolism a gentle boost." />
+            Steps
+            <InfoButton message="Every 10,000 steps yields ~300–500 extra kcal burn." />
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
@@ -479,11 +525,7 @@ export default function App() {
           <p>+{caloriesFromSteps} cal from steps</p>
           <button
             onClick={() => {
-              if (
-                window.confirm(
-                  "Are you sure? This cannot be undone."
-                )
-              ) {
+              if (window.confirm("Are you sure? This cannot be undone.")) {
                 resetDay();
               }
             }}
@@ -511,7 +553,6 @@ export default function App() {
             value={customName}
             onChange={(e) => setCustomName(e.target.value)}
           />
-          {/* Decimal-allowed Calories */}
           <input
             placeholder="Calories"
             type="text"
@@ -519,11 +560,11 @@ export default function App() {
             pattern="\d*\.?\d*"
             value={customCal}
             onChange={(e) => {
-              const raw = e.target.value;
-              if (DECIMAL_REGEX.test(raw)) setCustomCal(raw);
+              if (DECIMAL_REGEX.test(e.target.value)) {
+                setCustomCal(e.target.value);
+              }
             }}
           />
-          {/* Decimal-allowed Protein */}
           <input
             placeholder="Protein"
             type="text"
@@ -531,8 +572,9 @@ export default function App() {
             pattern="\d*\.?\d*"
             value={customProt}
             onChange={(e) => {
-              const raw = e.target.value;
-              if (DECIMAL_REGEX.test(raw)) setCustomProt(raw);
+              if (DECIMAL_REGEX.test(e.target.value)) {
+                setCustomProt(e.target.value);
+              }
             }}
           />
           <button onClick={addCustomFood}>Add</button>
