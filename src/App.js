@@ -97,31 +97,27 @@ const volumeUnits = [
   { label: "Tsp", factor: 1 / 48 },
 ];
 
-// ── Unified Inline FoodLogger ────────────────────────────────────────────
+// ── Unified FoodLogger ───────────────────────────────────────────────────
 function FoodLogger({ foodLog, setFoodLog }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [measurementType, setMeasurementType] = useState("count");
-  const [unit, setUnit] = useState("g");
+  const [unit, setUnit] = useState("Cups");
   const [value, setValue] = useState("");
   const [selectedFood, setSelectedFood] = useState(null);
 
-  // pick correct list
   const options =
     measurementType === "count"
       ? countFoods
       : measurementType === "weight"
       ? weightFoods
       : volumeFoods;
-
-  // live-filter options
   const filtered = options.filter((f) =>
     f.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSearchChange = (e) => {
-    const val = e.target.value;
-    setSearchTerm(val);
-    const match = options.find((f) => f.name === val);
+    setSearchTerm(e.target.value);
+    const match = options.find((f) => f.name === e.target.value);
     setSelectedFood(match || null);
   };
 
@@ -167,12 +163,12 @@ function FoodLogger({ foodLog, setFoodLog }) {
       <h4>
         Log Food
         <InfoButton
-          message="Search for a food, select it, choose Count/Weight/Volume (and unit), enter the amount, then tap Add."
+          message="Search for a food, select it above, choose Count/Weight/Volume and enter the amount, then Add."
         />
       </h4>
       <input
-        placeholder="Search / select food…"
         list="food-options"
+        placeholder="Search / select food…"
         value={searchTerm}
         onChange={handleSearchChange}
         style={{ width: "100%", marginBottom: 8 }}
@@ -188,7 +184,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
           value={measurementType}
           onChange={(e) => {
             setMeasurementType(e.target.value);
-            setUnit(e.target.value === "volume" ? "Cups" : "g");
+            setUnit(e.target.value === "volume" ? "Cups" : "Cups");
             setSelectedFood(null);
             setSearchTerm("");
           }}
@@ -209,9 +205,9 @@ function FoodLogger({ foodLog, setFoodLog }) {
         <input
           type="number"
           placeholder="Amount"
+          style={{ width: 80 }}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          style={{ width: 80 }}
         />
 
         <button onClick={handleAdd}>Add</button>
@@ -230,7 +226,7 @@ export default function App() {
     )}-${String(d.getDate()).padStart(2, "0")}`;
   })();
 
-  // Screen & profile
+  // Screens & profile
   const [screen, setScreen] = useState("home");
   const [editingProfile, setEditingProfile] = useState(
     () => localStorage.getItem("onboardingComplete") !== "true"
@@ -257,7 +253,7 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Edit states
+  // Edit state
   const [foodEditingIndex, setFoodEditingIndex] = useState(null);
   const [tempFood, setTempFood] = useState({ name: "", cal: "", prot: "" });
   const [weightEditingIndex, setWeightEditingIndex] = useState(null);
@@ -289,7 +285,7 @@ export default function App() {
   const wNum = parseFloat(weight);
   const proteinGoal = Number.isFinite(wNum) ? Math.round(wNum * 0.8) : 0;
 
-  // Persist to localStorage
+  // Persist
   useEffect(() => {
     localStorage.setItem("sex", sex);
     localStorage.setItem("age", age);
@@ -319,9 +315,7 @@ export default function App() {
       return;
     }
     setFoodLog((f) => [...f, { name: customName, cal: cals, prot: pro }]);
-    setCustomName("");
-    setCustomCal("");
-    setCustomProt("");
+    setCustomName(""); setCustomCal(""); setCustomProt("");
   };
   const startEditFood = (i) => {
     setFoodEditingIndex(i);
@@ -371,7 +365,7 @@ export default function App() {
     localStorage.removeItem(`steps-${today}`);
   };
 
-  // Render onboarding
+  // ── Onboarding ─────────────────────────────────────────────────────────
   if (editingProfile) {
     return (
       <div style={{ padding: 24 }}>
@@ -404,7 +398,7 @@ export default function App() {
     );
   }
 
-  // Render main
+  // ── Main UI ─────────────────────────────────────────────────────────────
   return (
     <div
       style={{
@@ -428,12 +422,11 @@ export default function App() {
         </button>
       </div>
 
-      {/* Home screen */}
+      {/* Home */}
       {screen === "home" && (
         <>
           <h3>
-            Calories
-            <InfoButton message="Your BMR minus 500 kcal + steps" />
+            Calories<InfoButton message="Your BMR minus 500 kcal + steps" />
           </h3>
           <ProgressBar
             value={calsToday}
@@ -443,8 +436,7 @@ export default function App() {
           />
 
           <h3>
-            Protein
-            <InfoButton message="0.8 g per lb bodyweight" />
+            Protein<InfoButton message="0.8 g per lb bodyweight" />
           </h3>
           <ProgressBar
             value={proteinToday}
@@ -454,8 +446,7 @@ export default function App() {
           />
 
           <h3>
-            Steps
-            <InfoButton message="0.04 kcal per step" />
+            Steps<InfoButton message="0.04 kcal per step" />
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
@@ -478,7 +469,7 @@ export default function App() {
         </>
       )}
 
-      {/* Food screen */}
+      {/* Food */}
       {screen === "food" && (
         <>
           <FoodLogger foodLog={foodLog} setFoodLog={setFoodLog} />
@@ -546,7 +537,7 @@ export default function App() {
         </>
       )}
 
-      {/* Weight screen */}
+      {/* Weight */}
       {screen === "weight" && (
         <>
           <h3>Track Weight</h3>
@@ -566,7 +557,7 @@ export default function App() {
               <input
                 placeholder="Today's weight"
                 value={tempWeight}
-                onChange={(e) => setTempWeight(e.target.value))}
+                onChange={(e) => setTempWeight(e.target.value)}
               />
               <button onClick={addWeightLog}>Log</button>
             </>
