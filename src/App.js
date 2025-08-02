@@ -86,7 +86,7 @@ export const presetFoods = [
 ];
 
 function App() {
-  // ── LOCAL DATE (YYYY-MM-DD) ─────────────────────────────────────────────
+  // ── LOCAL DATE ───────────────────────────────────────────────────────────
   const today = (() => {
     const d = new Date();
     const Y = d.getFullYear();
@@ -97,16 +97,20 @@ function App() {
 
   const [screen, setScreen] = useState("home");
 
-  // ── ONBOARDING FLAG ──────────────────────────────────────────────────────
-  const [editing, setEditing] = useState(
+  // ── ONBOARDING ──────────────────────────────────────────────────────────
+  const [editingProfile, setEditingProfile] = useState(
     () => localStorage.getItem("onboardingComplete") !== "true"
   );
 
   // ── PROFILE ─────────────────────────────────────────────────────────────
   const [sex, setSex] = useState(() => localStorage.getItem("sex") || "");
   const [age, setAge] = useState(() => localStorage.getItem("age") || "");
-  const [height, setHeight] = useState(() => localStorage.getItem("height") || "");
-  const [weight, setWeight] = useState(() => localStorage.getItem("weight") || "");
+  const [height, setHeight] = useState(() =>
+    localStorage.getItem("height") || ""
+  );
+  const [weight, setWeight] = useState(() =>
+    localStorage.getItem("weight") || ""
+  );
 
   // ── TODAY’S LOGS ────────────────────────────────────────────────────────
   const [steps, setSteps] = useState(() =>
@@ -121,13 +125,19 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // ── EDIT STATE ──────────────────────────────────────────────────────────
+  const [foodEditingIndex, setFoodEditingIndex] = useState(null);
+  const [tempFood, setTempFood] = useState({ name: "", cal: "", prot: "" });
+
+  const [weightEditingIndex, setWeightEditingIndex] = useState(null);
+  const [tempWeight, setTempWeight] = useState("");
+
   // ── FOOD SEARCH & CUSTOM ─────────────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [foodList, setFoodList] = useState([]);
   const [customName, setCustomName] = useState("");
   const [customCal, setCustomCal] = useState("");
   const [customProt, setCustomProt] = useState("");
-  const [newWeight, setNewWeight] = useState("");
 
   // ── CALCULATIONS ─────────────────────────────────────────────────────────
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
@@ -178,16 +188,15 @@ function App() {
 
   // ── HANDLERS ────────────────────────────────────────────────────────────
   const finishOnboarding = () => {
-    // mark onboarding complete
     localStorage.setItem("onboardingComplete", "true");
-    setEditing(false);
+    setEditingProfile(false);
   };
 
   const handlePresetSelect = (food) => {
     const [namePart, values] = food.split(" - ");
     const [kcal, prot] = values.replace(/kcal|protein/g, "").split("/");
-    setFoodLog([
-      ...foodLog,
+    setFoodLog((f) => [
+      ...f,
       { name: namePart, cal: +kcal.trim(), prot: +prot.trim() },
     ]);
     setSearch("");
@@ -201,28 +210,65 @@ function App() {
       alert("Please enter a name and valid calories.");
       return;
     }
-    // blank protein → 0
-    if (!customProt.trim() || isNaN(pro)) pro = 0;
-    setFoodLog([...foodLog, { name: customName, cal: cals, prot: pro }]);
+    if (isNaN(pro)) pro = 0;
+    setFoodLog((f) => [
+      ...f,
+      { name: customName, cal: cals, prot: pro },
+    ]);
     setCustomName("");
     setCustomCal("");
     setCustomProt("");
   };
 
-  const removeFood = (i) => {
-    setFoodLog(foodLog.filter((_, idx) => idx !== i));
+  const startEditFood = (i) => {
+    const item = foodLog[i];
+    setFoodEditingIndex(i);
+    setTempFood({ name: item.name, cal: item.cal, prot: item.prot });
   };
+  const saveEditFood = (i) => {
+    setFoodLog((f) =>
+      f.map((item, idx) =>
+        idx === i
+          ? { name: tempFood.name, cal: +tempFood.cal, prot: +tempFood.prot }
+          : item
+      )
+    );
+    setFoodEditingIndex(null);
+  };
+  const cancelEditFood = () => {
+    setFoodEditingIndex(null);
+  };
+  const removeFood = (i) => setFoodLog((f) => f.filter((_, idx) => idx !== i));
 
   const addWeight = () => {
-    const w = parseFloat(newWeight);
+    const w = parseFloat(tempWeight);
     if (!isNaN(w)) {
       const entry = { date: today, weight: w };
-      const updated = [...weightLog, entry];
-      setWeightLog(updated);
-      localStorage.setItem("weightLog", JSON.stringify(updated));
-      setNewWeight("");
+      setWeightLog((prev) => [...prev, entry]);
+      localStorage.setItem(
+        "weightLog",
+        JSON.stringify([...weightLog, entry])
+      );
+      setTempWeight("");
     }
   };
+
+  const startEditWeight = (i) => {
+    setWeightEditingIndex(i);
+    setTempWeight(weightLog[i].weight.toString());
+  };
+  const saveEditWeight = (i) => {
+    setWeightLog((w) =>
+      w.map((entry, idx) =>
+        idx === i ? { ...entry, weight: parseFloat(tempWeight) } : entry
+      )
+    );
+    localStorage.setItem("weightLog", JSON.stringify(weightLog));
+    setWeightEditingIndex(null);
+  };
+  const cancelEditWeight = () => setWeightEditingIndex(null);
+  const deleteWeight = (i) =>
+    setWeightLog((w) => w.filter((_, idx) => idx !== i));
 
   const resetDay = () => {
     setFoodLog([]);
@@ -280,7 +326,7 @@ function App() {
   });
 
   // ── RENDER ─────────────────────────────────────────────────────────────
-  if (editing) {
+  if (editingProfile) {
     return (
       <div style={{ padding: 24 }}>
         <h2>The 500 Plan</h2>
@@ -334,7 +380,7 @@ function App() {
         <button
           onClick={() => {
             localStorage.removeItem("onboardingComplete");
-            setEditing(true);
+            setEditingProfile(true);
           }}
         >
           ⚙️
@@ -431,14 +477,39 @@ function App() {
           <h4>Logged Foods Today</h4>
           <ul>
             {foodLog.map((item, idx) => (
-              <li key={idx}>
-                {item.name} — {item.cal} kcal / {item.prot}g protein{" "}
-                <button
-                  onClick={() => removeFood(idx)}
-                  style={{ marginLeft: 8, color: "red" }}
-                >
-                  ✖
-                </button>
+              <li key={idx} style={{ marginBottom: 6 }}>
+                {foodEditingIndex === idx ? (
+                  <>
+                    <input
+                      value={tempFood.name}
+                      onChange={(e) =>
+                        setTempFood((t) => ({ ...t, name: e.target.value }))
+                      }
+                    />
+                    <input
+                      value={tempFood.cal}
+                      type="number"
+                      onChange={(e) =>
+                        setTempFood((t) => ({ ...t, cal: e.target.value }))
+                      }
+                    />
+                    <input
+                      value={tempFood.prot}
+                      type="number"
+                      onChange={(e) =>
+                        setTempFood((t) => ({ ...t, prot: e.target.value }))
+                      }
+                    />
+                    <button onClick={() => saveEditFood(idx)}>Save</button>
+                    <button onClick={cancelEditFood}>Cancel</button>
+                  </>
+                ) : (
+                  <>
+                    {item.name} — {item.cal} kcal / {item.prot}g protein{" "}
+                    <button onClick={() => startEditFood(idx)}>✏️</button>{" "}
+                    <button onClick={() => removeFood(idx)}>✖️</button>
+                  </>
+                )}
               </li>
             ))}
           </ul>
@@ -448,17 +519,38 @@ function App() {
       {screen === "weight" && (
         <>
           <h3>Track Weight</h3>
-          <input
-            placeholder="Today's weight"
-            value={newWeight}
-            onChange={(e) => setNewWeight(e.target.value)}
-          />
-          <button onClick={addWeight}>Log</button>
+          {weightEditingIndex !== null ? (
+            <>
+              <input
+                value={tempWeight}
+                onChange={(e) => setTempWeight(e.target.value)}
+              />
+              <button onClick={() => saveEditWeight(weightEditingIndex)}>
+                Save
+              </button>
+              <button onClick={cancelEditWeight}>Cancel</button>
+            </>
+          ) : (
+            <>
+              <input
+                placeholder="Today's weight"
+                value={tempWeight}
+                onChange={(e) => setTempWeight(e.target.value)}
+              />
+              <button onClick={addWeight}>Log</button>
+            </>
+          )}
           <Line data={graphData} />
           <ul>
             {weightLog.map((w, i) => (
-              <li key={i}>
-                {w.date}: {w.weight} lb
+              <li key={i} style={{ marginBottom: 6 }}>
+                {weightEditingIndex === i ? null : (
+                  <>
+                    {w.date}: {w.weight} lb{" "}
+                    <button onClick={() => startEditWeight(i)}>✏️</button>{" "}
+                    <button onClick={() => deleteWeight(i)}>✖️</button>
+                  </>
+                )}
               </li>
             ))}
           </ul>
