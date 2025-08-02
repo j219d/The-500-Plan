@@ -8,7 +8,6 @@ import {
   PointElement,
   LineElement,
 } from "chart.js";
-import FoodLogger from "./FoodLogger";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
 
@@ -63,17 +62,164 @@ const navBtnStyle = (active) => ({
   cursor: "pointer",
 });
 
-function App() {
-  // ── LOCAL DATE ─────────────────────────────────────────────────────────
+// ── Unified FoodLogger component ────────────────────────────────────────
+const countFoods = [
+  { name: "Apple", cal: 95, prot: 1 },
+  { name: "Banana", cal: 105, prot: 1.3 },
+  { name: "Egg", cal: 70, prot: 6 },
+  { name: "Avocado", cal: 240, prot: 3 },
+  { name: "Walnut", cal: 26, prot: 0.6 },
+  { name: "Strawberry", cal: 4, prot: 0.1 },
+];
+const weightFoods = [
+  { name: "Chicken breast", calPer100g: 165, protPer100g: 31 },
+  { name: "Salmon", calPer100g: 206, protPer100g: 22 },
+  { name: "Broccoli", calPer100g: 34, protPer100g: 2.8 },
+  { name: "White rice", calPer100g: 130, protPer100g: 2.6 },
+  { name: "Brown rice", calPer100g: 112, protPer100g: 2.6 },
+  { name: "Spinach", calPer100g: 23, protPer100g: 2.9 },
+  { name: "Black beans", calPer100g: 132, protPer100g: 8.9 },
+  { name: "Strawberries", calPer100g: 32, protPer100g: 0.7 },
+];
+const volumeFoods = [
+  { name: "Oats (dry)", calPerCup: 307, protPerCup: 11 },
+  { name: "Chia seeds", calPerCup: 778, protPerCup: 28 },
+  { name: "Peanut butter", calPerCup: 1504, protPerCup: 64 },
+  { name: "Honey", calPerCup: 1031, protPerCup: 0 },
+  { name: "Maple syrup", calPerCup: 819, protPerCup: 0 },
+  { name: "Greek yogurt", calPerCup: 130, protPerCup: 23 },
+  { name: "Almond milk", calPerCup: 91, protPerCup: 3.6 },
+];
+const volumeUnits = [
+  { label: "Cups", factor: 1 },
+  { label: "Tbsp", factor: 1 / 16 },
+  { label: "Tsp", factor: 1 / 48 },
+];
+
+function FoodLogger({ foodLog, setFoodLog }) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [measurementType, setMeasurementType] = useState("count");
+  const [unit, setUnit] = useState("g");
+  const [value, setValue] = useState("");
+  const [selectedFood, setSelectedFood] = useState(null);
+
+  const options =
+    measurementType === "count"
+      ? countFoods
+      : measurementType === "weight"
+      ? weightFoods
+      : volumeFoods;
+  const filtered = options.filter((f) =>
+    f.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleAdd = () => {
+    if (!selectedFood || !value) return;
+    const amt = parseFloat(value);
+    let cal = 0,
+      prot = 0;
+
+    if (measurementType === "count") {
+      cal = selectedFood.cal * amt;
+      prot = selectedFood.prot * amt;
+    } else if (measurementType === "weight") {
+      const factor = amt / 100;
+      cal = selectedFood.calPer100g * factor;
+      prot = selectedFood.protPer100g * factor;
+    } else {
+      const unitObj = volumeUnits.find((u) => u.label === unit);
+      const factor = unitObj.factor * amt;
+      cal = selectedFood.calPerCup * factor;
+      prot = selectedFood.protPerCup * factor;
+    }
+
+    setFoodLog((f) => [
+      ...f,
+      {
+        name: `${value}${
+          measurementType === "count" ? "× " : " "
+        }${selectedFood.name}${
+          measurementType === "volume" ? " " + unit : ""
+        }`,
+        cal,
+        prot,
+      },
+    ]);
+
+    setSearchTerm("");
+    setSelectedFood(null);
+    setValue("");
+  };
+
+  return (
+    <div>
+      <h4>Log Food</h4>
+      <input
+        placeholder="Search…"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+
+      <div style={{ display: "flex", gap: 8, margin: "8px 0" }}>
+        <select
+          value={measurementType}
+          onChange={(e) => {
+            setMeasurementType(e.target.value);
+            setUnit(e.target.value === "volume" ? "Cups" : "g");
+            setSelectedFood(null);
+          }}
+        >
+          <option value="count">Count</option>
+          <option value="weight">Weight (g)</option>
+          <option value="volume">Volume</option>
+        </select>
+
+        <select
+          value={selectedFood ? selectedFood.name : ""}
+          onChange={(e) =>
+            setSelectedFood(
+              options.find((o) => o.name === e.target.value) || null
+            )
+          }
+        >
+          <option value="">Select food</option>
+          {filtered.map((f, i) => (
+            <option key={i}>{f.name}</option>
+          ))}
+        </select>
+
+        {measurementType === "volume" && (
+          <select value={unit} onChange={(e) => setUnit(e.target.value)}>
+            {volumeUnits.map((u) => (
+              <option key={u.label}>{u.label}</option>
+            ))}
+          </select>
+        )}
+
+        <input
+          type="number"
+          placeholder="Amount"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          style={{ width: 80 }}
+        />
+
+        <button onClick={handleAdd}>Add</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ─────────────────────────────────────────────────────────────
+export default function App() {
   const today = (() => {
     const d = new Date();
-    const Y = d.getFullYear();
-    const M = String(d.getMonth() + 1).padStart(2, "0");
-    const D = String(d.getDate()).padStart(2, "0");
-    return `${Y}-${M}-${D}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}-${String(d.getDate()).padStart(2, "0")}`;
   })();
 
-  // ── SCREENS & PROFILE ─────────────────────────────────────────────────
   const [screen, setScreen] = useState("home");
   const [editingProfile, setEditingProfile] = useState(
     () => localStorage.getItem("onboardingComplete") !== "true"
@@ -87,7 +233,6 @@ function App() {
     () => localStorage.getItem("weight") || ""
   );
 
-  // ── TODAY’S LOGS ────────────────────────────────────────────────────────
   const [steps, setSteps] = useState(
     () => parseInt(localStorage.getItem(`steps-${today}`), 10) || 0
   );
@@ -100,22 +245,20 @@ function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // ── EDIT STATE ─────────────────────────────────────────────────────────
   const [foodEditingIndex, setFoodEditingIndex] = useState(null);
   const [tempFood, setTempFood] = useState({ name: "", cal: "", prot: "" });
   const [weightEditingIndex, setWeightEditingIndex] = useState(null);
   const [tempWeight, setTempWeight] = useState("");
 
-  // ── CUSTOM ENTRY ───────────────────────────────────────────────────────
   const [customName, setCustomName] = useState("");
   const [customCal, setCustomCal] = useState("");
   const [customProt, setCustomProt] = useState("");
 
-  // ── CALCULATIONS ───────────────────────────────────────────────────────
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
   const caloriesFromSteps = Math.round(steps * 0.04);
-  function bmr() {
+
+  const bmr = () => {
     const h = parseInt(height, 10),
       w = parseFloat(weight),
       a = parseInt(age, 10);
@@ -127,12 +270,11 @@ function App() {
         ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
         : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
     );
-  }
+  };
   const calorieGoal = bmr() - 500 + caloriesFromSteps;
   const wNum = parseFloat(weight);
   const proteinGoal = Number.isFinite(wNum) ? Math.round(wNum * 0.8) : 0;
 
-  // ── PERSIST ────────────────────────────────────────────────────────────
   useEffect(() => {
     localStorage.setItem("sex", sex);
     localStorage.setItem("age", age);
@@ -149,7 +291,6 @@ function App() {
     localStorage.setItem("weightLog", JSON.stringify(weightLog));
   }, [weightLog]);
 
-  // ── HANDLERS ───────────────────────────────────────────────────────────
   const finishOnboarding = () => {
     localStorage.setItem("onboardingComplete", "true");
     setEditingProfile(false);
@@ -167,9 +308,8 @@ function App() {
     setCustomProt("");
   };
   const startEditFood = (i) => {
-    const it = foodLog[i];
     setFoodEditingIndex(i);
-    setTempFood({ name: it.name, cal: it.cal, prot: it.prot });
+    setTempFood({ ...foodLog[i] });
   };
   const saveEditFood = (i) => {
     setFoodLog((f) =>
@@ -182,7 +322,8 @@ function App() {
     setFoodEditingIndex(null);
   };
   const cancelEditFood = () => setFoodEditingIndex(null);
-  const removeFood = (i) => setFoodLog((f) => f.filter((_, idx) => idx !== i));
+  const removeFood = (i) =>
+    setFoodLog((f) => f.filter((_, idx) => idx !== i));
 
   const addWeightLog = () => {
     const w = parseFloat(tempWeight);
@@ -214,7 +355,6 @@ function App() {
     localStorage.removeItem(`steps-${today}`);
   };
 
-  // ── RENDER ─────────────────────────────────────────────────────────────
   if (editingProfile) {
     return (
       <div style={{ padding: 24 }}>
@@ -234,18 +374,12 @@ function App() {
         <br />
         <label>
           Height (in):{" "}
-          <input
-            value={height}
-            onChange={(e) => setHeight(e.target.value)}
-          />
+          <input value={height} onChange={(e) => setHeight(e.target.value)} />
         </label>
         <br />
         <label>
           Weight (lbs):{" "}
-          <input
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-          />
+          <input value={weight} onChange={(e) => setWeight(e.target.value)} />
         </label>
         <br />
         <button onClick={finishOnboarding}>Save &amp; Start</button>
@@ -278,12 +412,7 @@ function App() {
       {screen === "home" && (
         <>
           <h3>
-            Calories
-            <InfoButton
-              message={
-                "Your BMR (Basal Metabolic Rate) is the number of calories your body burns at rest—basically, what you’d burn if you spent all day in bed. We subtract 500 kcal from your BMR to create a safe, sustainable daily deficit that leads to about one pound of fat loss per week."
-              }
-            />
+            Calories<InfoButton message="Your BMR minus 500 kcal + steps" />
           </h3>
           <ProgressBar
             value={calsToday}
@@ -293,12 +422,7 @@ function App() {
           />
 
           <h3>
-            Protein
-            <InfoButton
-              message={
-                "Protein is the building block for muscles, organs, and even your skin and hair. When you’re in a calorie deficit, getting enough protein helps preserve lean muscle mass and keeps you feeling full. We recommend resistance training alongside the 500 Plan so that the calories you do eat go toward maintaining and building muscle."
-              }
-            />
+            Protein<InfoButton message="0.8 g per lb bodyweight" />
           </h3>
           <ProgressBar
             value={proteinToday}
@@ -308,12 +432,7 @@ function App() {
           />
 
           <h3>
-            Steps
-            <InfoButton
-              message={
-                "Walking is one of the easiest ways to burn extra calories without draining your energy. A target of 10,000 steps adds roughly 300–500 cal of burn per day—making your overall deficit that much more attainable and giving your metabolism a gentle boost."
-              }
-            />
+            Steps<InfoButton message="0.04 kcal per step" />
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
@@ -427,15 +546,19 @@ function App() {
               <button onClick={addWeightLog}>Log</button>
             </>
           )}
-          <Line data={{
-            labels: weightLog.map((w) => w.date),
-            datasets: [{
-              label: "Weight (lbs)",
-              data: weightLog.map((w) => w.weight),
-              fill: false,
-              tension: 0.1
-            }]
-          }} />
+          <Line
+            data={{
+              labels: weightLog.map((w) => w.date),
+              datasets: [
+                {
+                  label: "Weight (lbs)",
+                  data: weightLog.map((w) => w.weight),
+                  fill: false,
+                  tension: 0.1,
+                },
+              ],
+            }}
+          />
           <ul>
             {weightLog.map((w, i) => (
               <li key={i} style={{ marginBottom: 6 }}>
@@ -488,5 +611,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
