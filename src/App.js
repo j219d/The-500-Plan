@@ -466,18 +466,26 @@ export default function App() {
       style={{ width: 80 }}
       />
           <p>+{caloriesFromSteps} cal from steps</p>
-          <button
-            onClick={resetDay}
-            style={{
-              marginTop: 10,
-              background: "#000",
-              color: "#fff",
-              padding: 10,
-              borderRadius: 5,
-            }}
-          >
-            🔄 Reset Day
-          </button>
+      <button
+      onClick={() => {
+      if (
+      window.confirm(
+      "Are you sure? This cannot be undone."
+      )
+      ) {
+      resetDay();
+      }
+      }}
+      style={{
+      marginTop: 10,
+      background: "#000",
+      color: "#fff",
+      padding: 10,
+      borderRadius: 5,
+      }}
+      >
+      🔄 Reset Day
+      </button>
         </>
       )}
 
