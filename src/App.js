@@ -97,12 +97,16 @@ function App() {
 
   const [screen, setScreen] = useState("home");
 
+  // ── ONBOARDING FLAG ──────────────────────────────────────────────────────
+  const [editing, setEditing] = useState(
+    () => localStorage.getItem("onboardingComplete") !== "true"
+  );
+
   // ── PROFILE ─────────────────────────────────────────────────────────────
   const [sex, setSex] = useState(() => localStorage.getItem("sex") || "");
   const [age, setAge] = useState(() => localStorage.getItem("age") || "");
   const [height, setHeight] = useState(() => localStorage.getItem("height") || "");
   const [weight, setWeight] = useState(() => localStorage.getItem("weight") || "");
-  const [editing, setEditing] = useState(() => !(sex && age && height && weight));
 
   // ── TODAY’S LOGS ────────────────────────────────────────────────────────
   const [steps, setSteps] = useState(() =>
@@ -145,8 +149,6 @@ function App() {
   }
 
   const calorieGoal = bmr() - 500 + caloriesFromSteps;
-
-  // → PROTEIN GOAL GUARD
   const wNum = parseFloat(weight);
   const proteinGoal = Number.isFinite(wNum) ? Math.round(wNum * 0.8) : 0;
 
@@ -175,6 +177,12 @@ function App() {
   }, [search]);
 
   // ── HANDLERS ────────────────────────────────────────────────────────────
+  const finishOnboarding = () => {
+    // mark onboarding complete
+    localStorage.setItem("onboardingComplete", "true");
+    setEditing(false);
+  };
+
   const handlePresetSelect = (food) => {
     const [namePart, values] = food.split(" - ");
     const [kcal, prot] = values.replace(/kcal|protein/g, "").split("/");
@@ -286,21 +294,26 @@ function App() {
         </label>
         <br />
         <label>
-          Age:{" "}
-          <input value={age} onChange={(e) => setAge(e.target.value)} />
+          Age: <input value={age} onChange={(e) => setAge(e.target.value)} />
         </label>
         <br />
         <label>
           Height (inches):{" "}
-          <input value={height} onChange={(e) => setHeight(e.target.value)} />
+          <input
+            value={height}
+            onChange={(e) => setHeight(e.target.value)}
+          />
         </label>
         <br />
         <label>
           Weight (lbs):{" "}
-          <input value={weight} onChange={(e) => setWeight(e.target.value)} />
+          <input
+            value={weight}
+            onChange={(e) => setWeight(e.target.value)}
+          />
         </label>
         <br />
-        <button onClick={() => setEditing(false)}>Save & Start</button>
+        <button onClick={finishOnboarding}>Save & Start</button>
       </div>
     );
   }
@@ -312,12 +325,20 @@ function App() {
         paddingBottom: 80,
         maxWidth: 500,
         margin: "auto",
-        fontFamily: "sans-serif, 'Apple Color Emoji'",
+        fontFamily:
+          "sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji'",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between" }}>
         <h2>The 500 Plan</h2>
-        <button onClick={() => setEditing(true)}>⚙️</button>
+        <button
+          onClick={() => {
+            localStorage.removeItem("onboardingComplete");
+            setEditing(true);
+          }}
+        >
+          ⚙️
+        </button>
       </div>
 
       {screen === "home" && (
