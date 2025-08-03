@@ -152,9 +152,9 @@ const DECIMAL_REGEX = /^\d*\.?\d*$/;
 
 // ── Unified FoodLogger ───────────────────────────────────────────────────
 function FoodLogger({ foodLog, setFoodLog }) {
-  const [searchTerm, setSearchTerm] = useState("");
   const [measurementType, setMeasurementType] = useState("count");
   const [unit, setUnit] = useState("Cups");
+  const [searchTerm, setSearchTerm] = useState("");
   const [value, setValue] = useState("");
   const [selectedFood, setSelectedFood] = useState(null);
 
@@ -169,37 +169,38 @@ function FoodLogger({ foodLog, setFoodLog }) {
   );
 
   const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    const match = options.find((f) => f.name === e.target.value);
-    setSelectedFood(match || null);
+    const v = e.target.value;
+    setSearchTerm(v);
+    setSelectedFood(options.find((o) => o.name === v) || null);
   };
 
   const handleAdd = () => {
     if (!selectedFood || value === "") return;
     const amt = parseFloat(value);
     let cal = 0,
-      prot = 0;
+      prot = 0,
+      label = "";
 
     if (measurementType === "count") {
       cal = selectedFood.cal * amt;
       prot = selectedFood.prot * amt;
+      label = `${value}× ${selectedFood.name}`;
     } else if (measurementType === "weight") {
-      const factor = amt / 100;
-      cal = selectedFood.calPer100g * factor;
-      prot = selectedFood.protPer100g * factor;
+      cal = (selectedFood.calPer100g * amt) / 100;
+      prot = (selectedFood.protPer100g * amt) / 100;
+      label = `${value} g ${selectedFood.name}`;
     } else {
       const unitObj = volumeUnits.find((u) => u.label === unit);
-      const factor = unitObj.factor * amt;
+      const factor = amt * unitObj.factor;
       cal = selectedFood.calPerCup * factor;
       prot = selectedFood.protPerCup * factor;
+      label = `${value} ${unit} ${selectedFood.name}`;
     }
 
     setFoodLog((f) => [
       ...f,
       {
-        name: `${value}${measurementType === "count" ? "× " : " "}${
-          selectedFood.name
-        }${measurementType === "volume" ? " " + unit : ""}`,
+        name: label,
         cal,
         prot,
       },
@@ -217,58 +218,92 @@ function FoodLogger({ foodLog, setFoodLog }) {
           message="Quickly log everything you eat—search or select a food, choose count, weight, or volume, enter the amount, and hit Add. Consistent logging helps you stay on track with your daily calorie and protein goals."
         />
       </h4>
-      <input
-        list="food-options"
-        placeholder="Search / select food…"
-        value={searchTerm}
-        onChange={handleSearchChange}
-        style={{ width: "100%", marginBottom: 8 }}
-      />
-      <datalist id="food-options">
-        {filtered.map((f, i) => (
-          <option key={i} value={f.name} />
+
+      {/* Line 1: Count / Weight / Volume toggles */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+        {[
+          { key: "count", label: "Count" },
+          { key: "weight", label: "Weight (g)" },
+          { key: "volume", label: "Volume" },
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => {
+              setMeasurementType(key);
+              setUnit("Cups");
+              setSearchTerm("");
+              setSelectedFood(null);
+              setValue("");
+            }}
+            style={{
+              flex: 1,
+              padding: 8,
+              border: "1px solid #ccc",
+              borderRadius: 4,
+              background: measurementType === key ? "#0070f3" : "transparent",
+              color: measurementType === key ? "#fff" : "#000",
+              cursor: "pointer",
+            }}
+          >
+            {label}
+          </button>
         ))}
-      </datalist>
+      </div>
 
+      {/* Line 2: Volume unit toggles if needed */}
+      {measurementType === "volume" && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+          {volumeUnits.map((u) => (
+            <button
+              key={u.label}
+              onClick={() => setUnit(u.label)}
+              style={{
+                flex: 1,
+                padding: 6,
+                border: "1px solid #ccc",
+                borderRadius: 4,
+                background: unit === u.label ? "#0070f3" : "transparent",
+                color: unit === u.label ? "#fff" : "#000",
+                cursor: "pointer",
+              }}
+            >
+              {u.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Line 3: search + amount + add */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <select
-          value={measurementType}
-          onChange={(e) => {
-            setMeasurementType(e.target.value);
-            setUnit("Cups");
-            setSelectedFood(null);
-            setSearchTerm("");
-          }}
-        >
-          <option value="count">Count</option>
-          <option value="weight">Weight (g)</option>
-          <option value="volume">Volume</option>
-        </select>
-
-        {measurementType === "volume" && (
-          <select value={unit} onChange={(e) => setUnit(e.target.value)}>
-            {volumeUnits.map((u) => (
-              <option key={u.label}>{u.label}</option>
-            ))}
-          </select>
-        )}
+        <input
+          list="food-options"
+          placeholder="Search / select food…"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          style={{ flex: 1, padding: 6 }}
+        />
+        <datalist id="food-options">
+          {filtered.map((f, i) => (
+            <option key={i} value={f.name} />
+          ))}
+        </datalist>
 
         <input
           type="text"
           inputMode="decimal"
           pattern="\d*\.?\d*"
           placeholder="Amount"
-          style={{ width: 80 }}
           value={value}
           onChange={(e) => {
             const raw = e.target.value;
-            if (DECIMAL_REGEX.test(raw)) {
-              setValue(raw);
-            }
+            if (DECIMAL_REGEX.test(raw)) setValue(raw);
           }}
+          style={{ width: 80, padding: 6 }}
         />
 
-        <button onClick={handleAdd}>Add</button>
+        <button onClick={handleAdd} style={{ padding: "6px 12px" }}>
+          Add
+        </button>
       </div>
     </div>
   );
@@ -451,7 +486,8 @@ export default function App() {
         </label>
         <br />
         <label>
-          Weight (lbs):{" "}<input value={weight} onChange={(e) => setWeight(e.target.value)} />
+          Weight (lbs):{" "}
+          <input value={weight} onChange={(e) => setWeight(e.target.value)} />
         </label>
         <br />
         <button onClick={finishOnboarding}>Save & Start</button>
