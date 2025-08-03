@@ -11,10 +11,13 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
 
+// ── System font stack ─────────────────────────────────────────────────────
+const SYSTEM_FONT = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif';
+
 // ── Info button ──────────────────────────────────────────────────────────
 const InfoButton = ({ message }) => (
   <span
-    onClick={() => alert(message)}
+    onClick={() => alert(message)}           // keeps InfoButton alerts
     style={{
       marginLeft: 6,
       cursor: "pointer",
@@ -115,125 +118,84 @@ const navBtnStyle = (active) => ({
 
 // ── Predefined foods & units ─────────────────────────────────────────────
 const countFoods = [
-  { name: "Egg", cal: 70, prot: 6 },
   { name: "Apple", cal: 95, prot: 1 },
+  { name: "Avocado (half)", cal: 120, prot: 1.5 },
+  { name: "Avocado (whole)", cal: 240, prot: 3 },
   { name: "Banana", cal: 105, prot: 1.3 },
+  { name: "Bell pepper", cal: 24, prot: 1 },
+  { name: "Blueberry", cal: 1, prot: 0 },
+  { name: "Bread slice (whole wheat)", cal: 70, prot: 3.6 },
+  { name: "Brazil nut", cal: 33, prot: 0.7 },
+  { name: "Bread slice (whole wheat)", cal: 70, prot: 3.6 },
+  { name: "Carrot (medium)", cal: 25, prot: 0.6 },
+  { name: "Cherry", cal: 4, prot: 0.1 },
+  { name: "Cucumber (medium)", cal: 24, prot: 1 },
+  { name: "Egg", cal: 70, prot: 6 },
+  { name: "Grape", cal: 3, prot: 0.1 },
+  { name: "Kiwi", cal: 42, prot: 0.8 },
+  { name: "Mango", cal: 201, prot: 2.8 },
+  { name: "Olive (black)", cal: 4, prot: 0.1 },
+  { name: "Olive (green)", cal: 5, prot: 0.1 },
   { name: "Orange", cal: 62, prot: 1.2 },
+  { name: "Papaya", cal: 119, prot: 0.9 },
   { name: "Pear", cal: 101, prot: 0.6 },
   { name: "Peach", cal: 59, prot: 1.4 },
   { name: "Plum", cal: 30, prot: 0.5 },
-  { name: "Kiwi", cal: 42, prot: 0.8 },
-  { name: "Mango", cal: 201, prot: 2.8 },
-  { name: "Papaya", cal: 119, prot: 0.9 },  // whole papaya
-  { name: "Avocado (whole)", cal: 240, prot: 3 },
-  { name: "Avocado (half)", cal: 120, prot: 1.5 },
-  { name: "Carrot (medium)", cal: 25, prot: 0.6 },
-  { name: "Cucumber (medium)", cal: 24, prot: 1 },
-  { name: "Bell pepper", cal: 24, prot: 1 },
-  { name: "Tomato", cal: 22, prot: 1.1 },
-  { name: "Bread slice (whole wheat)", cal: 70, prot: 3.6 },
-  { name: "Strawberry", cal: 4, prot: 0.1 },
-  { name: "Blueberry", cal: 1, prot: 0 },
   { name: "Raspberry", cal: 1, prot: 0.1 },
-  { name: "Blackberry", cal: 2, prot: 0.1 },
-  { name: "Cherry", cal: 4, prot: 0.1 },
-  { name: "Grape", cal: 3, prot: 0.1 },
+  { name: "Strawberry", cal: 4, prot: 0.1 },
+  { name: "Tomato", cal: 22, prot: 1.1 },
   { name: "Walnut (kernel)", cal: 26, prot: 0.6 },
-  { name: "Brazil nut", cal: 33, prot: 0.7 },
-  { name: "Olive (green)", cal: 5, prot: 0.1 },
-  { name: "Olive (black)", cal: 4, prot: 0.1 },
 ];
 
 const weightFoods = [
-  // Weight-only (per 100 g)
-  { name: "Chicken breast", calPer100g: 165, protPer100g: 31 },
-  { name: "Turkey breast", calPer100g: 135, protPer100g: 30 },
-  { name: "Lean beef steak", calPer100g: 271, protPer100g: 25 },
-  { name: "Ground turkey", calPer100g: 187, protPer100g: 29 },
-  { name: "Salmon", calPer100g: 206, protPer100g: 22 },
-  { name: "Tuna (canned)", calPer100g: 132, protPer100g: 28 },
-  { name: "Cod", calPer100g: 82, protPer100g: 18 },
-  { name: "Tilapia", calPer100g: 129, protPer100g: 26 },
-  { name: "Trout", calPer100g: 168, protPer100g: 20 },
-  { name: "Mackerel", calPer100g: 205, protPer100g: 19 },
-  { name: "Anchovies", calPer100g: 210, protPer100g: 29 },
-  { name: "Tofu", calPer100g: 76, protPer100g: 8 },
-  { name: "Tempeh", calPer100g: 193, protPer100g: 20 },
-  { name: "Cottage cheese", calPer100g: 98, protPer100g: 11 },
-  { name: "Greek yogurt (plain)", calPer100g: 59, protPer100g: 10 },
-  { name: "Mozzarella", calPer100g: 280, protPer100g: 22 },
-  { name: "Cheddar cheese", calPer100g: 402, protPer100g: 25 },
   { name: "Almonds", calPer100g: 579, protPer100g: 21 },
-  { name: "Walnuts", calPer100g: 654, protPer100g: 15 },
-  { name: "Brazil nuts",  calPer100g: 656, protPer100g: 14.3 },
-  { name: "Peanuts", calPer100g: 567, protPer100g: 25 },
-  { name: "Cashews", calPer100g: 553, protPer100g: 18 },
-  { name: "Pistachios", calPer100g: 562, protPer100g: 20 },
-  { name: "Sunflower seeds", calPer100g: 584, protPer100g: 21 },
-  { name: "Pumpkin seeds", calPer100g: 559, protPer100g: 30 },
-  { name: "Chickpeas", calPer100g: 164, protPer100g: 9 },
-  { name: "Lentils", calPer100g: 116, protPer100g: 9 },
   { name: "Black beans", calPer100g: 132, protPer100g: 8.9 },
-  { name: "Kidney beans", calPer100g: 333, protPer100g: 23 },
-  { name: "Navy beans", calPer100g: 337, protPer100g: 22 },
-  { name: "Pinto beans", calPer100g: 347, protPer100g: 21 },
-  { name: "Cooked brown rice", calPer100g: 112, protPer100g: 2.6 }, // dual-mode
-  { name: "Cooked quinoa", calPer100g: 120, protPer100g: 4.4 },      // dual-mode
-  { name: "Cooked oatmeal", calPer100g: 71, protPer100g: 2.5 },      // dual-mode
-  { name: "Granola", calPer100g: 489, protPer100g: 9.4 },            // dual-mode
-  { name: "Strawberry", calPer100g: 32, protPer100g: 0.7 },          // all three
-  { name: "Blueberry", calPer100g: 57, protPer100g: 0.7 },           // weight & volume
-  { name: "Raspberry", calPer100g: 52, protPer100g: 1.2 },           // weight & volume
-  { name: "Blackberry", calPer100g: 43, protPer100g: 1.4 },          // weight & volume
+  { name: "Blueberry", calPer100g: 57, protPer100g: 0.7 },
+  { name: "Brazil nuts", calPer100g: 656, protPer100g: 14.3 },
+  { name: "Chickpeas", calPer100g: 164, protPer100g: 9 },
+  { name: "Cooked oatmeal", calPer100g: 71, protPer100g: 2.5 },
+  { name: "Cooked quinoa", calPer100g: 120, protPer100g: 4.4 },
+  { name: "Cooked brown rice", calPer100g: 112, protPer100g: 2.6 },
+  { name: "Cottage cheese", calPer100g: 98, protPer100g: 11 },
+  { name: "Cod", calPer100g: 82, protPer100g: 18 },
+  { name: "Granola", calPer100g: 489, protPer100g: 9.4 },
+  { name: "Greek yogurt (plain)", calPer100g: 59, protPer100g: 10 },
+  { name: "Ground turkey", calPer100g: 187, protPer100g: 29 },
+  { name: "Lean beef steak", calPer100g: 271, protPer100g: 25 },
+  { name: "Lentils", calPer100g: 116, protPer100g: 9 },
+  { name: "Mozzarella", calPer100g: 280, protPer100g: 22 },
+  { name: "Peanuts", calPer100g: 567, protPer100g: 25 },
+  { name: "Pistachios", calPer100g: 562, protPer100g: 20 },
+  { name: "Pumpkin seeds", calPer100g: 559, protPer100g: 30 },
+  { name: "Salmon", calPer100g: 206, protPer100g: 22 },
+  { name: "Strawberry", calPer100g: 32, protPer100g: 0.7 },
+  { name: "Tempeh", calPer100g: 193, protPer100g: 20 },
+  { name: "Tofu", calPer100g: 76, protPer100g: 8 },
+  { name: "Turkey breast", calPer100g: 135, protPer100g: 30 },
+  { name: "Walnuts", calPer100g: 654, protPer100g: 15 },
+  { name: "Tuna (canned)", calPer100g: 132, protPer100g: 28 },
 ];
 
 const volumeFoods = [
-  // Volume-only (per cup)
-  { name: "Olive oil",       calPerCup: 1927, protPerCup: 0 },
-  { name: "Canola oil",      calPerCup: 1907, protPerCup: 0 },
-  { name: "Coconut oil",     calPerCup: 1899, protPerCup: 0 },
-  { name: "Avocado oil",     calPerCup: 1928, protPerCup: 0 },
-  { name: "Sesame oil",      calPerCup: 1859, protPerCup: 0 },
-  { name: "Sunflower oil",   calPerCup: 1900, protPerCup: 0 },
-  { name: "Peanut butter",   calPerCup: 1504, protPerCup: 64 },
-  { name: "Almond butter",   calPerCup: 1625, protPerCup: 54 },
-  { name: "Cashew butter",   calPerCup: 1575, protPerCup: 56 },
-  { name: "Tahini",          calPerCup: 1648, protPerCup: 54 },
-  { name: "Hummus",          calPerCup: 408,  protPerCup: 13 },
-  { name: "Guacamole",       calPerCup: 345,  protPerCup: 4 },
-  { name: "Greek yogurt",    calPerCup: 130,  protPerCup: 23 },
-  { name: "Plain yogurt",    calPerCup: 149,  protPerCup: 8 },
-  { name: "Cottage cheese",  calPerCup: 206,  protPerCup: 24 },
-  { name: "Whole milk",      calPerCup: 149,  protPerCup: 8 },
-  { name: "2% milk",         calPerCup: 122,  protPerCup: 8 },
-  { name: "Skim milk",       calPerCup: 83,   protPerCup: 8.3 },
-  { name: "Soy milk",        calPerCup: 100,  protPerCup: 7 },
-  { name: "Almond milk",     calPerCup: 91,   protPerCup: 3.6 },
-  { name: "Oat milk",        calPerCup: 120,  protPerCup: 3 },
-  { name: "Rice milk",       calPerCup: 120,  protPerCup: 1 },
-  { name: "Coconut milk",    calPerCup: 552,  protPerCup: 5 },
-  { name: "Orange juice",    calPerCup: 112,  protPerCup: 2 },
-  { name: "Apple juice",     calPerCup: 114,  protPerCup: 0.2 },
-  { name: "Grape juice",     calPerCup: 152,  protPerCup: 0 },
-  { name: "Cranberry juice", calPerCup: 115,  protPerCup: 0 },
-  { name: "Tomato juice",    calPerCup: 41,   protPerCup: 2 },
-  { name: "Vegetable broth", calPerCup: 12,   protPerCup: 1 },
-  { name: "Chicken broth",   calPerCup: 38,   protPerCup: 5 },
-  { name: "Vegetable soup",  calPerCup: 92,   protPerCup: 3 },
-  { name: "Tomato soup",     calPerCup: 74,   protPerCup: 2 },
-  { name: "Lentil soup",     calPerCup: 223,  protPerCup: 17 },
-  { name: "Minestrone soup", calPerCup: 90,   protPerCup: 4 },
-  { name: "Beet soup",       calPerCup: 70,   protPerCup: 2 },
-  { name: "Smoothie",        calPerCup: 215,  protPerCup: 5 },
-  { name: "Protein shake",   calPerCup: 200,  protPerCup: 20 },
-  { name: "Cooked oatmeal",  calPerCup: 154,  protPerCup: 6 },  // dual-mode
-  { name: "Cooked rice",     calPerCup: 205,  protPerCup: 4.2 },// dual-mode
-  { name: "Cooked quinoa",   calPerCup: 222,  protPerCup: 8 },  // dual-mode
-  { name: "Cooked black beans", calPerCup: 227, protPerCup: 15 },//dual-mode
-  { name: "Cooked lentils",  calPerCup: 230,  protPerCup: 18 }, //dual-mode
-  { name: "Granola",         calPerCup: 597,  protPerCup: 11.5 },//dual-mode
-  { name: "Strawberry",      calPerCup: 49,   protPerCup: 1 },  // all three
+  { name: "Almond butter", calPerCup: 1625, protPerCup: 54 },
+  { name: "Avocado oil", calPerCup: 1928, protPerCup: 0 },
+  { name: "Canola oil", calPerCup: 1907, protPerCup: 0 },
+  { name: "Cashew butter", calPerCup: 1575, protPerCup: 56 },
+  { name: "Coconut oil", calPerCup: 1899, protPerCup: 0 },
+  { name: "Guacamole", calPerCup: 345, protPerCup: 4 },
+  { name: "Greek yogurt", calPerCup: 130, protPerCup: 23 },
+  { name: "Hummus", calPerCup: 408, protPerCup: 13 },
+  { name: "Olive oil", calPerCup: 1927, protPerCup: 0 },
+  { name: "Peanut butter", calPerCup: 1504, protPerCup: 64 },
+  { name: "Plain yogurt", calPerCup: 149, protPerCup: 8 },
+  { name: "Sesame oil", calPerCup: 1859, protPerCup: 0 },
+  { name: "Skim milk", calPerCup: 83, protPerCup: 8.3 },
+  { name: "Soy milk", calPerCup: 100, protPerCup: 7 },
+  { name: "Sunflower oil", calPerCup: 1900, protPerCup: 0 },
+  { name: "Tahini", calPerCup: 1648, protPerCup: 54 },
+  { name: "Whole milk", calPerCup: 149, protPerCup: 8 },
 ];
+
 const volumeUnits = [
   { label: "Cups", factor: 1 },
   { label: "Tbsp", factor: 1 / 16 },
@@ -243,10 +205,48 @@ const volumeUnits = [
 // regex to allow only digits and at most one decimal point
 const DECIMAL_REGEX = /^\d*\.?\d*$/;
 
-// ── Alphabetize food lists so dropdowns show A→Z ─────────────────────────
+// sort lists alphabetically
 countFoods.sort((a, b) => a.name.localeCompare(b.name));
 weightFoods.sort((a, b) => a.name.localeCompare(b.name));
 volumeFoods.sort((a, b) => a.name.localeCompare(b.name));
+
+// ── “How It Works” Carousel ──────────────────────────────────────────────
+function HowItWorks({ onFinish }) {
+  const cards = [
+    { title: "Track food", text: "Log calories & protein in a tap." },
+    { title: "Stay −500 kcal", text: "Maintain a safe daily deficit." },
+    { title: "Lose ~1 lb/wk", text: "Consistent tracking = progress." },
+  ];
+  const [idx, setIdx] = useState(0);
+
+  const next = () => {
+    if (idx < cards.length - 1) setIdx(idx + 1);
+    else {
+      localStorage.setItem("seenHowItWorks", "true");
+      onFinish();
+    }
+  };
+
+  return (
+    <div style={{
+      padding: 24,
+      maxWidth: 400,
+      margin: "auto",
+      fontFamily: SYSTEM_FONT,
+      textAlign: "center",
+    }}>
+      <h2>{cards[idx].title}</h2>
+      <p>{cards[idx].text}</p>
+      <button onClick={next} style={{
+        marginTop: 20,
+        padding: "8px 16px",
+        fontFamily: SYSTEM_FONT,
+      }}>
+        {idx < cards.length - 1 ? "Next" : "Get Started"}
+      </button>
+    </div>
+  );
+}
 
 // ── Unified FoodLogger ───────────────────────────────────────────────────
 function FoodLogger({ foodLog, setFoodLog }) {
@@ -255,6 +255,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [value, setValue] = useState("");
   const [selectedFood, setSelectedFood] = useState(null);
+  const [error, setError] = useState("");  // inline error
 
   const options =
     measurementType === "count"
@@ -267,14 +268,22 @@ function FoodLogger({ foodLog, setFoodLog }) {
   );
 
   const handleSearchChange = (e) => {
-    const v = e.target.value;
-    setSearchTerm(v);
-    setSelectedFood(options.find((o) => o.name === v) || null);
+    setSearchTerm(e.target.value);
+    setError("");
+    setSelectedFood(options.find((o) => o.name === e.target.value) || null);
   };
 
   const handleAdd = () => {
-    if (!selectedFood || value === "") return;
+    if (!selectedFood || value === "") {
+      setError("Select a food and enter an amount.");
+      return;
+    }
     const amt = parseFloat(value);
+    if (isNaN(amt) || amt <= 0) {
+      setError("Enter a valid number.");
+      return;
+    }
+    setError("");
     let cal = 0,
       prot = 0,
       label = "";
@@ -317,7 +326,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
         />
       </h4>
 
-      {/* Line 1: Count / Weight / Volume toggles */}
+      {/* Count / Weight / Volume toggles */}
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
         {[
           { key: "count", label: "Count" },
@@ -330,8 +339,9 @@ function FoodLogger({ foodLog, setFoodLog }) {
               setMeasurementType(key);
               setUnit("Cups");
               setSearchTerm("");
-              setSelectedFood(null);
               setValue("");
+              setSelectedFood(null);
+              setError("");
             }}
             style={{
               flex: 1,
@@ -341,6 +351,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
               background: measurementType === key ? "#0070f3" : "transparent",
               color: measurementType === key ? "#fff" : "#000",
               cursor: "pointer",
+              fontFamily: SYSTEM_FONT,
             }}
           >
             {label}
@@ -348,7 +359,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
         ))}
       </div>
 
-      {/* Line 2: Volume unit toggles if needed */}
+      {/* Volume unit toggles */}
       {measurementType === "volume" && (
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
           {volumeUnits.map((u) => (
@@ -363,6 +374,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
                 background: unit === u.label ? "#0070f3" : "transparent",
                 color: unit === u.label ? "#fff" : "#000",
                 cursor: "pointer",
+                fontFamily: SYSTEM_FONT,
               }}
             >
               {u.label}
@@ -371,14 +383,14 @@ function FoodLogger({ foodLog, setFoodLog }) {
         </div>
       )}
 
-      {/* Line 3: search + amount + add */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+      {/* Search + amount + add */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
         <input
           list="food-options"
           placeholder="Search / select food…"
           value={searchTerm}
           onChange={handleSearchChange}
-          style={{ flex: 1, padding: 6 }}
+          style={{ flex: 1, padding: 6, fontFamily: SYSTEM_FONT }}
         />
         <datalist id="food-options">
           {filtered.map((f, i) => (
@@ -393,22 +405,30 @@ function FoodLogger({ foodLog, setFoodLog }) {
           placeholder="Amount"
           value={value}
           onChange={(e) => {
-            const raw = e.target.value;
-            if (DECIMAL_REGEX.test(raw)) setValue(raw);
+            if (DECIMAL_REGEX.test(e.target.value)) {
+              setValue(e.target.value);
+              setError("");
+            }
           }}
-          style={{ width: 80, padding: 6 }}
+          style={{ width: 80, padding: 6, fontFamily: SYSTEM_FONT }}
         />
 
-        <button onClick={handleAdd} style={{ padding: "6px 12px" }}>
+        <button onClick={handleAdd} style={{ padding: "6px 12px", fontFamily: SYSTEM_FONT }}>
           Add
         </button>
       </div>
+      {error && <p style={{ color: "red", marginTop: 0 }}>{error}</p>}
     </div>
   );
 }
 
 // ── Main App ─────────────────────────────────────────────────────────────
 export default function App() {
+  // first-run carousel
+  const [showCarousel, setShowCarousel] = useState(
+    () => localStorage.getItem("seenHowItWorks") !== "true"
+  );
+
   const today = (() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
@@ -450,33 +470,11 @@ export default function App() {
   const [weightEditingIndex, setWeightEditingIndex] = useState(null);
   const [tempWeight, setTempWeight] = useState("");
 
-  // Custom entry
+  // Custom entry + inline error
   const [customName, setCustomName] = useState("");
   const [customCal, setCustomCal] = useState("");
   const [customProt, setCustomProt] = useState("");
-
-  // Calculations
-  const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
-  const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
-  // round protein to 2 decimal places
-  const proteinRounded = Math.round(proteinToday * 100) / 100;
-  const caloriesFromSteps = Math.round(steps * 0.04);
-  const bmr = () => {
-    const h = parseInt(height, 10),
-      w = parseFloat(weight),
-      a = parseInt(age, 10);
-    if (!h || !w || !a) return 1600;
-    const heightCm = h * 2.54,
-      weightKg = w * 0.453592;
-    return Math.round(
-      sex === "male"
-        ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
-        : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
-    );
-  };
-  const calorieGoal = bmr() - 500 + caloriesFromSteps;
-  const wNum = parseFloat(weight);
-  const proteinGoal = Number.isFinite(wNum) ? Math.round(wNum * 0.8) : 0;
+  const [customError, setCustomError] = useState("");
 
   // Persist
   useEffect(() => {
@@ -504,9 +502,10 @@ export default function App() {
     const cals = parseFloat(customCal);
     const pro = parseFloat(customProt) || 0;
     if (!customName || isNaN(cals)) {
-      alert("Enter name and valid calories.");
+      setCustomError("Enter name and valid calories.");
       return;
     }
+    setCustomError("");
     setFoodLog((f) => [...f, { name: customName, cal: cals, prot: pro }]);
     setCustomName("");
     setCustomCal("");
@@ -560,40 +559,66 @@ export default function App() {
     localStorage.removeItem(`steps-${today}`);
   };
 
+  // First-run: show How It Works carousel
+  if (showCarousel) {
+    return <HowItWorks onFinish={() => setShowCarousel(false)} />;
+  }
+
   // Onboarding screen
   if (editingProfile) {
     return (
-      <div style={{ padding: 24 }}>
+      <div style={{ padding: 24, fontFamily: SYSTEM_FONT }}>
         <h2>The 500 Plan</h2>
         <p>Track food. Hit your goals. Lose a pound a week.</p>
         <label>
           Sex:{" "}
-          <select value={sex} onChange={(e) => setSex(e.target.value)}>
+          <select value={sex} onChange={(e) => setSex(e.target.value)} style={{ fontFamily: SYSTEM_FONT }}>
             <option>male</option>
             <option>female</option>
           </select>
         </label>
         <br />
         <label>
-          Age: <input value={age} onChange={(e) => setAge(e.target.value)} />
+          Age: <input value={age} onChange={(e) => setAge(e.target.value)} style={{ fontFamily: SYSTEM_FONT }} />
         </label>
         <br />
         <label>
           Height (in):{" "}
-          <input value={height} onChange={(e) => setHeight(e.target.value)} />
+          <input value={height} onChange={(e) => setHeight(e.target.value)} style={{ fontFamily: SYSTEM_FONT }} />
         </label>
         <br />
         <label>
           Weight (lbs):{" "}
-          <input value={weight} onChange={(e) => setWeight(e.target.value)} />
+          <input value={weight} onChange={(e) => setWeight(e.target.value)} style={{ fontFamily: SYSTEM_FONT }} />
         </label>
         <br />
-        <button onClick={finishOnboarding}>Save & Start</button>
+        <button onClick={finishOnboarding} style={{ fontFamily: SYSTEM_FONT }}>Save & Start</button>
       </div>
     );
   }
 
   // Main UI
+  const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
+  const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
+  const proteinRounded = Math.round(proteinToday * 100) / 100;
+  const caloriesFromSteps = Math.round(steps * 0.04);
+  const bmr = () => {
+    const h = parseInt(height, 10),
+      w = parseFloat(weight),
+      a = parseInt(age, 10);
+    if (!h || !w || !a) return 1600;
+    const heightCm = h * 2.54,
+      weightKg = w * 0.453592;
+    return Math.round(
+      sex === "male"
+        ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
+        : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
+    );
+  };
+  const calorieGoal = bmr() - 500 + caloriesFromSteps;
+  const wNum = parseFloat(weight);
+  const proteinGoal = Number.isFinite(wNum) ? Math.round(wNum * 0.8) : 0;
+
   return (
     <div
       style={{
@@ -601,7 +626,7 @@ export default function App() {
         paddingBottom: 80,
         maxWidth: 500,
         margin: "auto",
-        fontFamily: "sans-serif",
+        fontFamily: SYSTEM_FONT,
       }}
     >
       {/* Header */}
@@ -612,6 +637,7 @@ export default function App() {
             localStorage.removeItem("onboardingComplete");
             setEditingProfile(true);
           }}
+          style={{ fontFamily: SYSTEM_FONT }}
         >
           ⚙️
         </button>
@@ -654,7 +680,7 @@ export default function App() {
                 setSteps(raw === "" ? 0 : parseInt(raw, 10));
               }
             }}
-            style={{ width: 80 }}
+            style={{ width: 80, fontFamily: SYSTEM_FONT }}
           />
           <p>+{caloriesFromSteps} cal from steps</p>
           <button
@@ -669,6 +695,7 @@ export default function App() {
               color: "#fff",
               padding: 10,
               borderRadius: 5,
+              fontFamily: SYSTEM_FONT,
             }}
           >
             🔄 Reset Day
@@ -685,7 +712,11 @@ export default function App() {
           <input
             placeholder="Name"
             value={customName}
-            onChange={(e) => setCustomName(e.target.value)}
+            onChange={(e) => {
+              setCustomName(e.target.value);
+              setCustomError("");
+            }}
+            style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
           />
           <input
             placeholder="Calories"
@@ -696,8 +727,10 @@ export default function App() {
             onChange={(e) => {
               if (DECIMAL_REGEX.test(e.target.value)) {
                 setCustomCal(e.target.value);
+                setCustomError("");
               }
             }}
+            style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
           />
           <input
             placeholder="Protein"
@@ -708,15 +741,22 @@ export default function App() {
             onChange={(e) => {
               if (DECIMAL_REGEX.test(e.target.value)) {
                 setCustomProt(e.target.value);
+                setCustomError("");
               }
             }}
+            style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
           />
-          <button onClick={addCustomFood}>Add</button>
+          <button onClick={addCustomFood} style={{ fontFamily: SYSTEM_FONT }}>
+            Add
+          </button>
+          {customError && (
+            <p style={{ color: "red", marginTop: 4 }}>{customError}</p>
+          )}
 
           <h4>Logged Foods</h4>
           <ul>
             {foodLog.map((it, i) => (
-              <li key={i} style={{ marginBottom: 6 }}>
+              <li key={i} style={{ marginBottom: 6, fontFamily: SYSTEM_FONT }}>
                 {foodEditingIndex === i ? (
                   <>
                     <input
@@ -724,6 +764,7 @@ export default function App() {
                       onChange={(e) =>
                         setTempFood((t) => ({ ...t, name: e.target.value }))
                       }
+                      style={{ marginRight: 4, fontFamily: SYSTEM_FONT }}
                     />
                     <input
                       value={tempFood.cal}
@@ -731,6 +772,7 @@ export default function App() {
                       onChange={(e) =>
                         setTempFood((t) => ({ ...t, cal: e.target.value }))
                       }
+                      style={{ width: 60, marginRight: 4, fontFamily: SYSTEM_FONT }}
                     />
                     <input
                       value={tempFood.prot}
@@ -738,16 +780,17 @@ export default function App() {
                       onChange={(e) =>
                         setTempFood((t) => ({ ...t, prot: e.target.value }))
                       }
+                      style={{ width: 60, marginRight: 4, fontFamily: SYSTEM_FONT }}
                     />
-                    <button onClick={() => saveEditFood(i)}>Save</button>
-                    <button onClick={cancelEditFood}>Cancel</button>
+                    <button onClick={() => saveEditFood(i)} style={{ fontFamily: SYSTEM_FONT }}>Save</button>{" "}
+                    <button onClick={cancelEditFood} style={{ fontFamily: SYSTEM_FONT }}>Cancel</button>
                   </>
                 ) : (
                   <>
                     {it.name} — {it.cal.toFixed(1)} kcal /{" "}
                     {it.prot.toFixed(1)}g protein{" "}
-                    <button onClick={() => startEditFood(i)}>✏️</button>{" "}
-                    <button onClick={() => removeFood(i)}>✖️</button>
+                    <button onClick={() => startEditFood(i)} style={{ fontFamily: SYSTEM_FONT }}>✏️</button>{" "}
+                    <button onClick={() => removeFood(i)} style={{ fontFamily: SYSTEM_FONT }}>✖️</button>
                   </>
                 )}
               </li>
@@ -759,17 +802,20 @@ export default function App() {
       {/* Weight */}
       {screen === "weight" && (
         <>
-          <h3>Track Weight</h3>
+          <h3 style={{ fontFamily: SYSTEM_FONT }}>Track Weight</h3>
           {weightEditingIndex !== null ? (
             <>
               <input
                 value={tempWeight}
                 onChange={(e) => setTempWeight(e.target.value)}
+                style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
               />
-              <button onClick={() => saveEditWeight(weightEditingIndex)}>
+              <button onClick={() => saveEditWeight(weightEditingIndex)} style={{ fontFamily: SYSTEM_FONT }}>
                 Save
+              </button>{" "}
+              <button onClick={cancelEditWeight} style={{ fontFamily: SYSTEM_FONT }}>
+                Cancel
               </button>
-              <button onClick={cancelEditWeight}>Cancel</button>
             </>
           ) : (
             <>
@@ -777,8 +823,11 @@ export default function App() {
                 placeholder="Today's weight"
                 value={tempWeight}
                 onChange={(e) => setTempWeight(e.target.value)}
+                style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
               />
-              <button onClick={addWeightLog}>Log</button>
+              <button onClick={addWeightLog} style={{ fontFamily: SYSTEM_FONT }}>
+                Log
+              </button>
             </>
           )}
           <Line
@@ -796,12 +845,12 @@ export default function App() {
           />
           <ul>
             {weightLog.map((w, i) => (
-              <li key={i} style={{ marginBottom: 6 }}>
+              <li key={i} style={{ marginBottom: 6, fontFamily: SYSTEM_FONT }}>
                 {weightEditingIndex === i ? null : (
                   <>
                     {w.date}: {w.weight} lb{" "}
-                    <button onClick={() => startEditWeight(i)}>✏️</button>{" "}
-                    <button onClick={() => deleteWeight(i)}>✖️</button>
+                    <button onClick={() => startEditWeight(i)} style={{ fontFamily: SYSTEM_FONT }}>✏️</button>{" "}
+                    <button onClick={() => deleteWeight(i)} style={{ fontFamily: SYSTEM_FONT }}>✖️</button>
                   </>
                 )}
               </li>
@@ -823,6 +872,7 @@ export default function App() {
           borderTop: "1px solid #ccc",
           height: 60,
           boxShadow: "0 -1px 5px rgba(0,0,0,0.1)",
+          fontFamily: SYSTEM_FONT,
         }}
       >
         <button
