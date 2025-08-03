@@ -228,8 +228,7 @@ function HowItWorks({ onFinish }) {
     },
     {
       title: "Healthy basics",
-      text:
-         text: "We focus on calories & protein—the key drivers of weight-loss and satiety. Healthy fats & carbs matter too, but most people meet those needs by eating normally. If you’re unsure, a quick chat with your doctor or a dietitian can help.",
+      text: "We focus on calories & protein—the key drivers of weight-loss and satiety. Healthy fats & carbs matter too, but most people meet those needs by eating normally. If you’re unsure, a quick chat with your doctor or a dietitian can help.",
     },
   ];
 
