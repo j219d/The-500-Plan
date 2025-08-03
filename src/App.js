@@ -115,7 +115,6 @@ const navBtnStyle = (active) => ({
 
 // ── Predefined foods & units ─────────────────────────────────────────────
 const countFoods = [
-  // Count-only items
   { name: "Egg", cal: 70, prot: 6 },
   { name: "Apple", cal: 95, prot: 1 },
   { name: "Banana", cal: 105, prot: 1.3 },
@@ -124,51 +123,23 @@ const countFoods = [
   { name: "Peach", cal: 59, prot: 1.4 },
   { name: "Plum", cal: 30, prot: 0.5 },
   { name: "Kiwi", cal: 42, prot: 0.8 },
-  { name: "Avocado", cal: 240, prot: 3 },
+  { name: "Mango", cal: 201, prot: 2.8 },
+  { name: "Papaya", cal: 119, prot: 0.9 },  // whole papaya
+  { name: "Avocado (whole)", cal: 240, prot: 3 },
+  { name: "Avocado (half)", cal: 120, prot: 1.5 },
   { name: "Carrot (medium)", cal: 25, prot: 0.6 },
   { name: "Cucumber (medium)", cal: 24, prot: 1 },
   { name: "Bell pepper", cal: 24, prot: 1 },
   { name: "Tomato", cal: 22, prot: 1.1 },
-  { name: "Eggplant slice", cal: 5, prot: 0.2 },
-  { name: "Mushroom (button)", cal: 3, prot: 0.4 },
-  { name: "Celery stalk", cal: 6, prot: 0.3 },
   { name: "Bread slice (whole wheat)", cal: 70, prot: 3.6 },
-  // Berries & small fruits
   { name: "Strawberry", cal: 4, prot: 0.1 },
   { name: "Blueberry", cal: 1, prot: 0 },
   { name: "Raspberry", cal: 1, prot: 0.1 },
   { name: "Blackberry", cal: 2, prot: 0.1 },
   { name: "Cherry", cal: 4, prot: 0.1 },
   { name: "Grape", cal: 3, prot: 0.1 },
-  // Melons, exotic, dried
-  { name: "Watermelon wedge", cal: 85, prot: 1.7 },
-  { name: "Cantaloupe wedge", cal: 53, prot: 1.3 },
-  { name: "Honeydew wedge", cal: 61, prot: 0.9 },
-  { name: "Pineapple chunk", cal: 82, prot: 0.9 },
-  { name: "Mango slice", cal: 35, prot: 0.7 },
-  { name: "Papaya slice", cal: 68, prot: 0.5 },
-  { name: "Lychee", cal: 6, prot: 0.1 },
-  { name: "Fig (fresh)", cal: 47, prot: 0.5 },
-  { name: "Apricot", cal: 17, prot: 0.5 },
-  { name: "Nectarine", cal: 62, prot: 1.5 },
-  { name: "Pluot", cal: 34, prot: 0.8 },
-  { name: "Date (Medjool)", cal: 66, prot: 0.4 },
-  { name: "Prune", cal: 20, prot: 0.2 },
-  { name: "Raisin (small handful)", cal: 85, prot: 1 },
-  { name: "Grapefruit segment", cal: 8, prot: 0.2 },
-  { name: "Dragonfruit slice", cal: 60, prot: 1 },
-  { name: "Starfruit slice", cal: 6, prot: 0.2 },
-  { name: "Passionfruit", cal: 17, prot: 0.4 },
-  { name: "Kiwi slice", cal: 6, prot: 0.1 },
-  { name: "Cherry tomato", cal: 3, prot: 0.2 },
-  { name: "Snap pea pod", cal: 4, prot: 0.4 },
-  { name: "Edamame pod", cal: 9, prot: 0.8 },
-  { name: "Radish", cal: 1, prot: 0.1 },
-  { name: "Brussels sprout", cal: 8, prot: 0.6 },
-  { name: "Broccoli floret", cal: 6, prot: 0.5 },
-  { name: "Cauliflower floret", cal: 5, prot: 0.4 },
-  { name: "Snap pea", cal: 4, prot: 0.4 },
-  { name: "Pickle spear", cal: 4, prot: 0.2 },
+  { name: "Walnut (kernel)", cal: 26, prot: 0.6 },
+  { name: "Brazil nut", cal: 33, prot: 0.7 },
   { name: "Olive (green)", cal: 5, prot: 0.1 },
   { name: "Olive (black)", cal: 4, prot: 0.1 },
 ];
@@ -194,6 +165,7 @@ const weightFoods = [
   { name: "Cheddar cheese", calPer100g: 402, protPer100g: 25 },
   { name: "Almonds", calPer100g: 579, protPer100g: 21 },
   { name: "Walnuts", calPer100g: 654, protPer100g: 15 },
+  { name: "Brazil nuts",  calPer100g: 656, protPer100g: 14.3 },
   { name: "Peanuts", calPer100g: 567, protPer100g: 25 },
   { name: "Cashews", calPer100g: 553, protPer100g: 18 },
   { name: "Pistachios", calPer100g: 562, protPer100g: 20 },
@@ -270,6 +242,11 @@ const volumeUnits = [
 
 // regex to allow only digits and at most one decimal point
 const DECIMAL_REGEX = /^\d*\.?\d*$/;
+
+// ── Alphabetize food lists so dropdowns show A→Z ─────────────────────────
+countFoods.sort((a, b) => a.name.localeCompare(b.name));
+weightFoods.sort((a, b) => a.name.localeCompare(b.name));
+volumeFoods.sort((a, b) => a.name.localeCompare(b.name));
 
 // ── Unified FoodLogger ───────────────────────────────────────────────────
 function FoodLogger({ foodLog, setFoodLog }) {
