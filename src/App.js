@@ -229,7 +229,7 @@ function HowItWorks({ onFinish }) {
     {
       title: "Healthy basics",
       text:
-        "We track calories & protein. Still aim for enough fats and carbs for overall health—if you’re unsure, chat with a doctor or dietitian.",
+         text: "We focus on calories & protein—the key drivers of weight-loss and satiety. Healthy fats & carbs matter too, but most people meet those needs by eating normally. If you’re unsure, a quick chat with your doctor or a dietitian can help.",
     },
   ];
 
