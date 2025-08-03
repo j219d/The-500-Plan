@@ -15,8 +15,17 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
 const SYSTEM_FONT =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif';
 
+// ── canonical “today” helper ──────────────────────────────────────────────
+function getToday() {
+  const d = new Date();
+  const Y = d.getFullYear();
+  const M = String(d.getMonth() + 1).padStart(2, "0");
+  const D = String(d.getDate()).padStart(2, "0");
+  return `${Y}-${M}-${D}`; // e.g. "2025-08-03"
+}
+
 // 👉 kcal a single step roughly burns
-const CALS_PER_STEP = 0.04;         
+const CALS_PER_STEP = 0.04;
 
 // ── Info button ──────────────────────────────────────────────────────────
 const InfoButton = ({ message }) => (
@@ -65,11 +74,7 @@ const CalorieBar = ({ consumed, goal }) => {
   const remaining   = goal - consumed;
   const pct         = Math.max((remaining / goal) * 100, 0);
   const overflowPct = remaining < 0 ? Math.min((-remaining / goal) * 100, 100) : 0;
-
-  // ⇢ new: how many extra steps erase the overage
-  const extraSteps  = remaining < 0
-    ? Math.ceil((-remaining) / CALS_PER_STEP)
-    : 0;
+  const extraSteps  = remaining < 0 ? Math.ceil((-remaining) / CALS_PER_STEP) : 0;
 
   return (
     <>
@@ -392,7 +397,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
             </button>
           ))}
         </div>
-      )}
+      )} 
 
       {/* search + amount + add */}
       <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
@@ -452,13 +457,8 @@ export default function App() {
     () => localStorage.getItem("seenHowItWorks") !== "true"
   );
 
-  const today = (() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}-${String(d.getDate()).padStart(2, "0")}`;
-  })();
+  // ── only change here ─────────────────────────────────────────────────────
+  const today = getToday();
 
   // profile & logs
   const [screen, setScreen] = useState("home");
@@ -497,7 +497,7 @@ export default function App() {
   const [customCal, setCustomCal] = useState("");
   const [customProt, setCustomProt] = useState("");
   const [customError, setCustomError] = useState("");
-
+  
   // persist
   useEffect(() => {
     localStorage.setItem("sex", sex);
@@ -638,10 +638,9 @@ export default function App() {
   // main UI
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
-  // round for display only:
   const proteinRounded = Math.round(proteinToday);
   const proteinGoal = Math.round(parseFloat(weight) * 0.8 || 0);
-  const caloriesFromSteps = Math.round(steps * 0.04);
+  const caloriesFromSteps = Math.round(steps * CALS_PER_STEP);
   const bmr = () => {
     const h = parseInt(height, 10),
       w = parseFloat(weight),
@@ -873,7 +872,7 @@ export default function App() {
       )}
 
       {/* Weight */}
-      {screen === "weight" && (
+      {screen === "weight" && ( 
         <>
           <h3 style={{ fontFamily: SYSTEM_FONT }}>Track Weight</h3>
           {weightEditingIndex !== null ? (
@@ -983,4 +982,3 @@ export default function App() {
     </div>
   );
 }
-
