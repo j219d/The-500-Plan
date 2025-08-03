@@ -653,15 +653,13 @@ export default function App() {
         <>
           <h3 style={{ fontFamily: SYSTEM_FONT }}>
             Calories{" "}
-            <InfoButton message="Your basal metabolic rate (BMR) is what you’d burn at rest;  
-we subtract 500 kcal for a safe, sustainable daily deficit." />
+            <InfoButton message="Your body burns calories even at rest (BMR). Eating ~500 kcal less than that each day sheds about 1 lb a week." />
           </h3>
           <CalorieBar consumed={calsToday} goal={calorieGoal} />
 
           <h3 style={{ fontFamily: SYSTEM_FONT }}>
             Protein{" "}
-            <InfoButton message="Adequate protein intake preserves lean muscle during a deficit  
-and helps keep you feeling satisfied longer." />
+            <InfoButton message="Hit your daily protein to keep muscle and stay full while cutting calories." />
           </h3>
           <ProgressBar
             value={proteinRounded}
@@ -672,8 +670,7 @@ and helps keep you feeling satisfied longer." />
 
           <h3 style={{ fontFamily: SYSTEM_FONT }}>
             Steps{" "}
-            <InfoButton message="Every extra step contributes to your daily burn—  
-10,000 steps adds roughly 300–500 kcal." />
+            <InfoButton message="More steps = more burn. ~10 k steps add roughly 300-500 kcal to your daily budget." />
           </h3>
           <ProgressBar value={steps} goal={10000} color="#ff9800" />
           <input
