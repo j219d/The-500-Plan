@@ -15,6 +15,9 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
 const SYSTEM_FONT =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif';
 
+// 👉 kcal a single step roughly burns
+const CALS_PER_STEP = 0.04;         
+
 // ── Info button ──────────────────────────────────────────────────────────
 const InfoButton = ({ message }) => (
   <span
@@ -59,9 +62,15 @@ const ProgressBar = ({ value, goal, color, label }) => (
 
 // ── CalorieBar ───────────────────────────────────────────────────────────
 const CalorieBar = ({ consumed, goal }) => {
-  const remaining = goal - consumed;
-  const pct = Math.max((remaining / goal) * 100, 0);
+  const remaining   = goal - consumed;
+  const pct         = Math.max((remaining / goal) * 100, 0);
   const overflowPct = remaining < 0 ? Math.min((-remaining / goal) * 100, 100) : 0;
+
+  // ⇢ new: how many extra steps erase the overage
+  const extraSteps  = remaining < 0
+    ? Math.ceil((-remaining) / CALS_PER_STEP)
+    : 0;
+
   return (
     <>
       <div
@@ -96,7 +105,7 @@ const CalorieBar = ({ consumed, goal }) => {
       <p style={{ fontFamily: SYSTEM_FONT }}>
         {remaining >= 0
           ? `${remaining.toFixed(0)} kcal remaining`
-          : `Over by ${(-remaining).toFixed(0)} kcal!`}
+          : `Over by ${(-remaining).toFixed(0)} kcal — about ${extraSteps.toLocaleString()} extra steps will balance it out`}
       </p>
     </>
   );
