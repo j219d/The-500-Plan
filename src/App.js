@@ -214,18 +214,36 @@ const DECIMAL_REGEX = /^\d*\.?\d*$/;
 // ── “How It Works” Carousel ──────────────────────────────────────────────
 function HowItWorks({ onFinish }) {
   const cards = [
-    { title: "Track food", text: "Log calories & protein in a tap." },
-    { title: "Stay −500 kcal", text: "Maintain a safe daily deficit." },
-    { title: "Lose ~1 lb/wk", text: "Consistency yields progress." },
+    {
+      title: "Track food",
+      text: "Log calories and protein in a tap.",
+    },
+    {
+      title: "Stay −500 kcal",
+      text: "Maintain a safe daily calorie deficit.",
+    },
+    {
+      title: "Lose ~1 lb / wk",
+      text: "Consistency = steady progress.",
+    },
+    {
+      title: "Healthy basics",
+      text:
+        "We track calories & protein. Still aim for enough fats and carbs for overall health—if you’re unsure, chat with a doctor or dietitian.",
+    },
   ];
-  const [idx, setIdx] = useState(0);
+
+  const [idx, setIdx] = React.useState(0);
+
   const next = () => {
-    if (idx < cards.length - 1) setIdx(idx + 1);
-    else {
+    if (idx < cards.length - 1) {
+      setIdx(idx + 1);
+    } else {
       localStorage.setItem("seenHowItWorks", "true");
       onFinish();
     }
   };
+
   return (
     <div
       style={{
@@ -238,16 +256,23 @@ function HowItWorks({ onFinish }) {
     >
       <h2>{cards[idx].title}</h2>
       <p>{cards[idx].text}</p>
+
+      {/* bigger, friendlier button */}
       <button
         onClick={next}
         style={{
-          marginTop: 20,
-          padding: "12px 24px",
+          marginTop: 28,
+          padding: "14px 28px",
           fontSize: 18,
+          borderRadius: 8,
+          border: "none",
+          background: "#0070f3",
+          color: "#fff",
           fontFamily: SYSTEM_FONT,
+          cursor: "pointer",
         }}
       >
-        {idx < cards.length - 1 ? "Next" : "Get Started"}
+        {idx < cards.length - 1 ? "Next ➜" : "Start tracking"}
       </button>
     </div>
   );
