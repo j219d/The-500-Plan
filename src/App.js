@@ -453,6 +453,20 @@ function FoodLogger({ foodLog, setFoodLog }) {
 
 // ── Main App ─────────────────────────────────────────────────────────────
 export default function App() {
+    // On mount: clear any legacy un-padded or padded keys for today’s logs
+  useEffect(() => {
+    const d = new Date();
+    const Y = d.getFullYear();
+    const M = d.getMonth() + 1;
+    const D = d.getDate();
+    // padded: "2025-08-03", un-padded: "2025-8-3"
+    const padded   = `${Y}-${String(M).padStart(2, "0")}-${String(D).padStart(2, "0")}`;
+    const unpadded = `${Y}-${M}-${D}`;
+    ["foodLog", "steps"].forEach((key) => {
+      localStorage.removeItem(`${key}-${unpadded}`);
+      localStorage.removeItem(`${key}-${padded}`);
+    });
+  }, []);
   const [showCarousel, setShowCarousel] = useState(
     () => localStorage.getItem("seenHowItWorks") !== "true"
   );
