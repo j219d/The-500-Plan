@@ -215,7 +215,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
       <h4>
         Log Food
         <InfoButton
-          message="Quickly log everything you eat—search or select a food, choose count, weight, or volume, enter the amount, and hit Add. Consistent logging helps you stay on track with your daily calorie and protein goals."
+          message="Quickly log everything you eat — choose count, weight, or volume, search or select a food, enter the amount, and hit Add. Consistent logging helps you stay on track with your daily calorie and protein goals."
         />
       </h4>
 
