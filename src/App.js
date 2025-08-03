@@ -571,11 +571,24 @@ export default function App() {
   const cancelEditWeight = () => setWeightEditingIndex(null);
   const deleteWeight = (i) => setWeightLog((w) => w.filter((_, idx) => idx !== i));
 
-  const resetDay = () => {
+   const resetDay = () => {
     setFoodLog([]);
     setSteps(0);
-    localStorage.removeItem(`foodLog-${today}`);
-    localStorage.removeItem(`steps-${today}`);
+
+    // build both padded and bare date strings
+    const d = new Date();
+    const Y = d.getFullYear();
+    const M = d.getMonth() + 1;    // 1–12
+    const D = d.getDate();         // 1–31
+
+    const padded = `${Y}-${String(M).padStart(2, "0")}-${String(D).padStart(2, "0")}`;
+    const bare   = `${Y}-${M}-${D}`;
+
+    // clear both variants from localStorage
+    localStorage.removeItem(`foodLog-${padded}`);
+    localStorage.removeItem(`steps-${padded}`);
+    localStorage.removeItem(`foodLog-${bare}`);
+    localStorage.removeItem(`steps-${bare}`);
   };
 
   // first-run carousel
