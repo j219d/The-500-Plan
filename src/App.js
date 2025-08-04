@@ -11,23 +11,11 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
 
-// ── System font stack ─────────────────────────────────────────────────────
+// ── System font stack ────────────────────────────────────────────────
 const SYSTEM_FONT =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif';
 
-// ── canonical “today” helper ──────────────────────────────────────────────
-function getToday() {
-  const d = new Date();
-  const Y = d.getFullYear();
-  const M = String(d.getMonth() + 1).padStart(2, "0");
-  const D = String(d.getDate()).padStart(2, "0");
-  return `${Y}-${M}-${D}`; // e.g. "2025-08-03"
-}
-
-// 👉 kcal a single step roughly burns
-const CALS_PER_STEP = 0.04;
-
-// ── Info button ──────────────────────────────────────────────────────────
+// ── Info tiny “ⓘ” helper ────────────────────────────────────────────
 const InfoButton = ({ message }) => (
   <span
     onClick={() => alert(message)}
@@ -45,13 +33,13 @@ const InfoButton = ({ message }) => (
   </span>
 );
 
-// ── ProgressBar ──────────────────────────────────────────────────────────
+// ── Simple horizontal progress bar ──────────────────────────────────
 const ProgressBar = ({ value, goal, color, label }) => (
   <>
     <div
       style={{
         height: 20,
-        background: "#eee",
+        background: "#e0e0e0",
         borderRadius: 10,
         overflow: "hidden",
       }}
@@ -69,54 +57,7 @@ const ProgressBar = ({ value, goal, color, label }) => (
   </>
 );
 
-// ── CalorieBar ───────────────────────────────────────────────────────────
-const CalorieBar = ({ consumed, goal }) => {
-  const remaining   = goal - consumed;
-  const pct         = Math.max((remaining / goal) * 100, 0);
-  const overflowPct = remaining < 0 ? Math.min((-remaining / goal) * 100, 100) : 0;
-  const extraSteps  = remaining < 0 ? Math.ceil((-remaining) / CALS_PER_STEP) : 0;
-
-  return (
-    <>
-      <div
-        style={{
-          position: "relative",
-          height: 20,
-          background: "#eee",
-          borderRadius: 10,
-          overflow: "hidden",
-        }}
-      >
-        <div
-          style={{
-            width: `${pct}%`,
-            background: "#2196f3",
-            height: "100%",
-            transition: "width 0.3s ease",
-          }}
-        />
-        {overflowPct > 0 && (
-          <div
-            style={{
-              position: "absolute",
-              right: 0,
-              width: `${overflowPct}%`,
-              background: "#e53935",
-              height: "100%",
-            }}
-          />
-        )}
-      </div>
-      <p style={{ fontFamily: SYSTEM_FONT }}>
-        {remaining >= 0
-          ? `${remaining.toFixed(0)} kcal remaining`
-          : `Over by ${(-remaining).toFixed(0)} kcal — about ${extraSteps.toLocaleString()} extra steps will balance it out`}
-      </p>
-    </>
-  );
-};
-
-// ── Bottom nav style ─────────────────────────────────────────────────────
+// ── Bottom-nav button styling helper ────────────────────────────────
 const navBtnStyle = (active) => ({
   flex: 1,
   padding: 10,
@@ -128,93 +69,223 @@ const navBtnStyle = (active) => ({
   fontFamily: SYSTEM_FONT,
 });
 
-// ── Foods & units ────────────────────────────────────────────────────────
-const countFoods = [
-  { name: "Apple", cal: 95, prot: 1 },
-  { name: "Avocado (half)", cal: 120, prot: 1.5 },
-  { name: "Avocado (whole)", cal: 240, prot: 3 },
-  { name: "Banana", cal: 105, prot: 1.3 },
-  { name: "Bell pepper", cal: 24, prot: 1 },
-  { name: "Blueberry", cal: 1, prot: 0 },
-  { name: "Bread slice (whole wheat)", cal: 70, prot: 3.6 },
-  { name: "Brazil nut", cal: 33, prot: 0.7 },
-  { name: "Carrot (medium)", cal: 25, prot: 0.6 },
-  { name: "Cherry", cal: 4, prot: 0.1 },
-  { name: "Cucumber (medium)", cal: 24, prot: 1 },
-  { name: "Egg", cal: 70, prot: 6 },
-  { name: "Grape", cal: 3, prot: 0.1 },
-  { name: "Kiwi", cal: 42, prot: 0.8 },
-  { name: "Mango", cal: 201, prot: 2.8 },
-  { name: "Olive (black)", cal: 4, prot: 0.1 },
-  { name: "Olive (green)", cal: 5, prot: 0.1 },
-  { name: "Orange", cal: 62, prot: 1.2 },
-  { name: "Papaya", cal: 119, prot: 0.9 },
-  { name: "Pear", cal: 101, prot: 0.6 },
-  { name: "Peach", cal: 59, prot: 1.4 },
-  { name: "Plum", cal: 30, prot: 0.5 },
-  { name: "Raspberry", cal: 1, prot: 0.1 },
-  { name: "Strawberry", cal: 4, prot: 0.1 },
-  { name: "Tomato", cal: 22, prot: 1.1 },
-  { name: "Walnut (kernel)", cal: 26, prot: 0.6 },
-];
-const weightFoods = [
-  { name: "Almonds", calPer100g: 579, protPer100g: 21 },
-  { name: "Black beans", calPer100g: 132, protPer100g: 8.9 },
-  { name: "Blueberry", calPer100g: 57, protPer100g: 0.7 },
-  { name: "Brazil nuts", calPer100g: 656, protPer100g: 14.3 },
-  { name: "Chickpeas", calPer100g: 164, protPer100g: 9 },
-  { name: "Cooked oatmeal", calPer100g: 71, protPer100g: 2.5 },
-  { name: "Cooked quinoa", calPer100g: 120, protPer100g: 4.4 },
-  { name: "Cooked brown rice", calPer100g: 112, protPer100g: 2.6 },
-  { name: "Cottage cheese", calPer100g: 98, protPer100g: 11 },
-  { name: "Cod", calPer100g: 82, protPer100g: 18 },
-  { name: "Granola", calPer100g: 489, protPer100g: 9.4 },
-  { name: "Greek yogurt (plain)", calPer100g: 59, protPer100g: 10 },
-  { name: "Ground turkey", calPer100g: 187, protPer100g: 29 },
-  { name: "Lean beef steak", calPer100g: 271, protPer100g: 25 },
-  { name: "Lentils", calPer100g: 116, protPer100g: 9 },
-  { name: "Mozzarella", calPer100g: 280, protPer100g: 22 },
-  { name: "Peanuts", calPer100g: 567, protPer100g: 25 },
-  { name: "Pistachios", calPer100g: 562, protPer100g: 20 },
-  { name: "Pumpkin seeds", calPer100g: 559, protPer100g: 30 },
-  { name: "Salmon", calPer100g: 206, protPer100g: 22 },
-  { name: "Strawberry", calPer100g: 32, protPer100g: 0.7 },
-  { name: "Tempeh", calPer100g: 193, protPer100g: 20 },
-  { name: "Tofu", calPer100g: 76, protPer100g: 8 },
-  { name: "Turkey breast", calPer100g: 135, protPer100g: 30 },
-  { name: "Walnuts", calPer100g: 654, protPer100g: 15 },
-  { name: "Tuna (canned)", calPer100g: 132, protPer100g: 28 },
-];
-const volumeFoods = [
-  { name: "Almond butter", calPerCup: 1625, protPerCup: 54 },
-  { name: "Avocado oil", calPerCup: 1928, protPerCup: 0 },
-  { name: "Canola oil", calPerCup: 1907, protPerCup: 0 },
-  { name: "Cashew butter", calPerCup: 1575, protPerCup: 56 },
-  { name: "Coconut oil", calPerCup: 1899, protPerCup: 0 },
-  { name: "Guacamole", calPerCup: 345, protPerCup: 4 },
-  { name: "Greek yogurt", calPerCup: 130, protPerCup: 23 },
-  { name: "Hummus", calPerCup: 408, protPerCup: 13 },
-  { name: "Olive oil", calPerCup: 1927, protPerCup: 0 },
-  { name: "Peanut butter", calPerCup: 1504, protPerCup: 64 },
-  { name: "Plain yogurt", calPerCup: 149, protPerCup: 8 },
-  { name: "Sesame oil", calPerCup: 1859, protPerCup: 0 },
-  { name: "Skim milk", calPerCup: 83, protPerCup: 8.3 },
-  { name: "Soy milk", calPerCup: 100, protPerCup: 7 },
-  { name: "Sunflower oil", calPerCup: 1900, protPerCup: 0 },
-  { name: "Tahini", calPerCup: 1648, protPerCup: 54 },
-  { name: "Whole milk", calPerCup: 149, protPerCup: 8 },
-];
-const volumeUnits = [
-  { label: "Cups", factor: 1 },
-  { label: "Tbsp", factor: 1 / 16 },
-  { label: "Tsp", factor: 1 / 48 },
-];
+// ── Regex used throughout for number-only inputs ────────────────────
 const DECIMAL_REGEX = /^\d*\.?\d*$/;
 
-// alphabetize dropdowns
-[countFoods, weightFoods, volumeFoods].forEach((arr) =>
-  arr.sort((a, b) => a.name.localeCompare(b.name))
-);
+// ── Calories burned per step (rough average) ────────────────────────
+const CALS_PER_STEP = 0.04;
+
+/* ===================================================================
+   ⬇️  APP COMPONENT
+   ===================================================================*/
+export default function App() {
+  // ——— On-device state & persistence ————————————————
+  const [height, setHeight] = useState(
+    () => localStorage.getItem("height") || ""
+  );
+  const [weight, setWeight] = useState(
+    () => localStorage.getItem("weight") || ""
+  );
+  const [age, setAge] = useState(() => localStorage.getItem("age") || "");
+  const [sex, setSex] = useState(() => localStorage.getItem("sex") || "male");
+
+  const today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+
+  const [foodLog, setFoodLog] = useState(() => {
+    const saved = localStorage.getItem(`food-${today}`);
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [steps, setSteps] = useState(
+    () => parseInt(localStorage.getItem(`steps-${today}`), 10) || 0
+  );
+  const [weightLog, setWeightLog] = useState(() => {
+    const saved = localStorage.getItem("weightLog");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // screens: home | food | weight
+  const [screen, setScreen] = useState("home");
+
+  // ✏️  edit helpers used in Food & Weight pages (unchanged) ----------
+  const [customName, setCustomName] = useState("");
+  const [customCal, setCustomCal] = useState("");
+  const [customProt, setCustomProt] = useState("");
+  const [customError, setCustomError] = useState("");
+
+  const [tempFood, setTempFood] = useState({ name: "", cal: "", prot: "" });
+  const [foodEditingIndex, setFoodEditingIndex] = useState(null);
+
+  const [tempWeight, setTempWeight] = useState("");
+  const [weightEditingIndex, setWeightEditingIndex] = useState(null);
+
+  // ——— Persist to localStorage whenever things change ————————
+  useEffect(() => {
+    localStorage.setItem("height", height);
+  }, [height]);
+  useEffect(() => {
+    localStorage.setItem("weight", weight);
+  }, [weight]);
+  useEffect(() => {
+    localStorage.setItem("age", age);
+  }, [age]);
+  useEffect(() => {
+    localStorage.setItem("sex", sex);
+  }, [sex]);
+  useEffect(() => {
+    localStorage.setItem(`food-${today}`, JSON.stringify(foodLog));
+  }, [foodLog, today]);
+  useEffect(() => {
+    localStorage.setItem(`steps-${today}`, steps.toString());
+  }, [steps, today]);
+  useEffect(() => {
+    localStorage.setItem("weightLog", JSON.stringify(weightLog));
+  }, [weightLog]);
+
+  // ——— Derived daily metrics ————————————————————————————————
+  const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
+  const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
+  const proteinRounded = Math.round(proteinToday);
+  const proteinGoal = Math.round(parseFloat(weight) * 0.8 || 0);
+
+  const caloriesFromSteps = Math.round(steps * CALS_PER_STEP);
+
+  const bmr = () => {
+    const h = parseInt(height, 10),
+      w = parseFloat(weight),
+      a = parseInt(age, 10);
+    if (!h || !w || !a) return 1600;
+    const heightCm = h * 2.54,
+      weightKg = w * 0.453592;
+    return Math.round(
+      sex === "male"
+        ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
+        : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
+    );
+  };
+  const calorieGoal = bmr() - 500 + caloriesFromSteps;
+
+  /* ──────────────────────────────────────────────────────────
+     Home-screen layout (no persistent header)
+     ──────────────────────────────────────────────────────────*/
+  return (
+    <div
+      style={{
+        padding: 24,
+        paddingBottom: 80, // room for bottom-nav
+        maxWidth: 500,
+        margin: "auto",
+        fontFamily: SYSTEM_FONT,
+      }}
+    >
+      {/* HOME */}
+      {screen === "home" && (
+        <>
+          {/* Calories */}
+          <h3 style={{ fontFamily: SYSTEM_FONT }}>
+            Calories
+            <InfoButton message="Stay within your daily budget (BMR – 500 kcal). Steps add extra allowance automatically." />
+          </h3>
+          <ProgressBar
+            value={calsToday}
+            goal={calorieGoal}
+            color="#4caf50"
+            label={`${calsToday.toLocaleString()} / ${calorieGoal.toLocaleString()} kcal`}
+          />
+
+          {/* Protein */}
+          <h3 style={{ fontFamily: SYSTEM_FONT }}>
+            Protein
+            <InfoButton message="Aim for ≈ 0.8 g per lb of body-weight to preserve muscle and curb hunger." />
+          </h3>
+          <ProgressBar
+            value={proteinRounded}
+            goal={proteinGoal}
+            color="#2196f3"
+            label={`${proteinRounded} / ${proteinGoal} g`}
+          />
+
+          {/* Steps */}
+          <h3 style={{ fontFamily: SYSTEM_FONT }}>
+            Steps
+            <InfoButton message="Every step burns a little energy and raises your calorie target." />
+          </h3>
+          <ProgressBar
+            value={steps}
+            goal={10000}
+            color="#9c27b0"
+            label={`${steps.toLocaleString()} / 10,000`}
+          />
+        </>
+      )}
+
+      {/* FOOD LOGGER (unchanged) */}
+      {screen === "food" && (
+        <>
+          <FoodLogger
+            foodLog={foodLog}
+            setFoodLog={setFoodLog}
+            customName={customName}
+            setCustomName={setCustomName}
+            customCal={customCal}
+            setCustomCal={setCustomCal}
+            customProt={customProt}
+            setCustomProt={setCustomProt}
+            customError={customError}
+            setCustomError={setCustomError}
+            tempFood={tempFood}
+            setTempFood={setTempFood}
+            foodEditingIndex={foodEditingIndex}
+            setFoodEditingIndex={setFoodEditingIndex}
+          />
+        </>
+      )}
+
+      {/* WEIGHT / PROGRESS (unchanged) */}
+      {screen === "weight" && (
+        <WeightSection
+          weightLog={weightLog}
+          setWeightLog={setWeightLog}
+          tempWeight={tempWeight}
+          setTempWeight={setTempWeight}
+          weightEditingIndex={weightEditingIndex}
+          setWeightEditingIndex={setWeightEditingIndex}
+        />
+      )}
+
+      {/* ── Bottom Navigation ─────────────────────────────── */}
+      <div
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          display: "flex",
+          background: "#fff",
+          borderTop: "1px solid #ccc",
+          height: 60,
+          boxShadow: "0 -1px 5px rgba(0,0,0,0.1)",
+          fontFamily: SYSTEM_FONT,
+        }}
+      >
+        <button style={navBtnStyle(screen === "home")} onClick={() => setScreen("home")}>
+          🏠 Home
+        </button>
+        <button style={navBtnStyle(screen === "food")} onClick={() => setScreen("food")}>
+          📋 Log
+        </button>
+        <button style={navBtnStyle(screen === "weight")} onClick={() => setScreen("weight")}>
+          📈 Progress
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ── “How It Works” Carousel ──────────────────────────────────────────────
 function HowItWorks({ onFinish }) {
@@ -397,7 +468,7 @@ function FoodLogger({ foodLog, setFoodLog }) {
             </button>
           ))}
         </div>
-      )} 
+      )}
 
       {/* search + amount + add */}
       <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
@@ -453,26 +524,17 @@ function FoodLogger({ foodLog, setFoodLog }) {
 
 // ── Main App ─────────────────────────────────────────────────────────────
 export default function App() {
-    // On mount: clear any legacy un-padded or padded keys for today’s logs
-  useEffect(() => {
-    const d = new Date();
-    const Y = d.getFullYear();
-    const M = d.getMonth() + 1;
-    const D = d.getDate();
-    // padded: "2025-08-03", un-padded: "2025-8-3"
-    const padded   = `${Y}-${String(M).padStart(2, "0")}-${String(D).padStart(2, "0")}`;
-    const unpadded = `${Y}-${M}-${D}`;
-    ["foodLog", "steps"].forEach((key) => {
-      localStorage.removeItem(`${key}-${unpadded}`);
-      localStorage.removeItem(`${key}-${padded}`);
-    });
-  }, []);
   const [showCarousel, setShowCarousel] = useState(
     () => localStorage.getItem("seenHowItWorks") !== "true"
   );
 
-  // ── only change here ─────────────────────────────────────────────────────
-  const today = getToday();
+  const today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
 
   // profile & logs
   const [screen, setScreen] = useState("home");
@@ -511,7 +573,7 @@ export default function App() {
   const [customCal, setCustomCal] = useState("");
   const [customProt, setCustomProt] = useState("");
   const [customError, setCustomError] = useState("");
-  
+
   // persist
   useEffect(() => {
     localStorage.setItem("sex", sex);
@@ -585,24 +647,11 @@ export default function App() {
   const cancelEditWeight = () => setWeightEditingIndex(null);
   const deleteWeight = (i) => setWeightLog((w) => w.filter((_, idx) => idx !== i));
 
-   const resetDay = () => {
+  const resetDay = () => {
     setFoodLog([]);
     setSteps(0);
-
-    // build both padded and bare date strings
-    const d = new Date();
-    const Y = d.getFullYear();
-    const M = d.getMonth() + 1;    // 1–12
-    const D = d.getDate();         // 1–31
-
-    const padded = `${Y}-${String(M).padStart(2, "0")}-${String(D).padStart(2, "0")}`;
-    const bare   = `${Y}-${M}-${D}`;
-
-    // clear both variants from localStorage
-    localStorage.removeItem(`foodLog-${padded}`);
-    localStorage.removeItem(`steps-${padded}`);
-    localStorage.removeItem(`foodLog-${bare}`);
-    localStorage.removeItem(`steps-${bare}`);
+    localStorage.removeItem(`foodLog-${today}`);
+    localStorage.removeItem(`steps-${today}`);
   };
 
   // first-run carousel
@@ -665,9 +714,10 @@ export default function App() {
   // main UI
   const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
   const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
+  // round for display only:
   const proteinRounded = Math.round(proteinToday);
   const proteinGoal = Math.round(parseFloat(weight) * 0.8 || 0);
-  const caloriesFromSteps = Math.round(steps * CALS_PER_STEP);
+  const caloriesFromSteps = Math.round(steps * 0.04);
   const bmr = () => {
     const h = parseInt(height, 10),
       w = parseFloat(weight),
@@ -899,7 +949,7 @@ export default function App() {
       )}
 
       {/* Weight */}
-      {screen === "weight" && ( 
+      {screen === "weight" && (
         <>
           <h3 style={{ fontFamily: SYSTEM_FONT }}>Track Weight</h3>
           {weightEditingIndex !== null ? (
