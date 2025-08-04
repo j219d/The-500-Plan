@@ -8,446 +8,132 @@ import {
   PointElement,
   LineElement,
 } from "chart.js";
-
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement);
 
-// ── System font stack ────────────────────────────────────────────────
+/* ───────────── Common helpers & constants ───────────── */
 const SYSTEM_FONT =
-  'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif';
-
-// ── Info tiny “ⓘ” helper ────────────────────────────────────────────
-const InfoButton = ({ message }) => (
+  'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+const DECIMAL_REGEX = /^\d*\.?\d*$/;
+const CALS_PER_STEP = 0.04;
+const navBtn = (active) => ({
+  flex: 1,
+  padding: 10,
+  fontSize: 16,
+  border: "none",
+  background: "none",
+  fontWeight: active ? "bold" : "normal",
+  cursor: "pointer",
+  fontFamily: SYSTEM_FONT,
+});
+const Info = ({ msg }) => (
   <span
-    onClick={() => alert(message)}
-    style={{
-      marginLeft: 6,
-      cursor: "pointer",
-      color: "#0070f3",
-      fontWeight: "bold",
-      userSelect: "none",
-      fontFamily: SYSTEM_FONT,
-    }}
+    onClick={() => alert(msg)}
+    style={{ marginLeft: 6, cursor: "pointer", color: "#0070f3", fontWeight: "bold" }}
     title="More info"
   >
     ⓘ
   </span>
 );
-
-// ── Simple horizontal progress bar ──────────────────────────────────
-const ProgressBar = ({ value, goal, color, label }) => (
+const Bar = ({ v, g, color, label }) => (
   <>
-    <div
-      style={{
-        height: 20,
-        background: "#e0e0e0",
-        borderRadius: 10,
-        overflow: "hidden",
-      }}
-    >
+    <div style={{ height: 20, background: "#e0e0e0", borderRadius: 10, overflow: "hidden" }}>
       <div
-        style={{
-          width: `${Math.min((value / goal) * 100, 100)}%`,
-          background: color,
-          height: "100%",
-          transition: "width 0.3s ease",
-        }}
+        style={{ width: `${Math.min((v / g) * 100, 100)}%`, background: color, height: "100%" }}
       />
     </div>
-    {label && <p style={{ fontFamily: SYSTEM_FONT }}>{label}</p>}
+    <p style={{ margin: 4, fontFamily: SYSTEM_FONT }}>{label}</p>
   </>
 );
 
-// ── Bottom-nav button styling helper ────────────────────────────────
-const navBtnStyle = (active) => ({
-  flex: 1,
-  padding: 10,
-  fontSize: 16,
-  background: "none",
-  border: "none",
-  fontWeight: active ? "bold" : "normal",
-  cursor: "pointer",
-  fontFamily: SYSTEM_FONT,
-});
+/* ───────────── Starter food databases ───────────── */
+const countFoods = [
+  { name: "Egg", cal: 78, prot: 6 },
+  { name: "Banana", cal: 105, prot: 1 },
+  { name: "Apple", cal: 95, prot: 0.5 },
+  { name: "Chicken Nugget", cal: 45, prot: 2.5 },
+];
+const weightFoods = [
+  { name: "Chicken Breast", calPer100g: 165, protPer100g: 31 },
+  { name: "Rice, cooked", calPer100g: 130, protPer100g: 2.7 },
+];
+const volumeFoods = [
+  { name: "Oatmeal, cooked", calPerCup: 154, protPerCup: 6 },
+  { name: "Milk, 2 %", calPerCup: 122, protPerCup: 8 },
+];
+const volumeUnits = [
+  { label: "Tbsp", factor: 0.0625 },
+  { label: "¼ Cup", factor: 0.25 },
+  { label: "½ Cup", factor: 0.5 },
+  { label: "Cups", factor: 1 },
+];
 
-// ── Regex used throughout for number-only inputs ────────────────────
-const DECIMAL_REGEX = /^\d*\.?\d*$/;
-
-// ── Calories burned per step (rough average) ────────────────────────
-const CALS_PER_STEP = 0.04;
-
-/* ===================================================================
-   ⬇️  APP COMPONENT
-   ===================================================================*/
-export default function App() {
-  // ——— On-device state & persistence ————————————————
-  const [height, setHeight] = useState(
-    () => localStorage.getItem("height") || ""
-  );
-  const [weight, setWeight] = useState(
-    () => localStorage.getItem("weight") || ""
-  );
-  const [age, setAge] = useState(() => localStorage.getItem("age") || "");
-  const [sex, setSex] = useState(() => localStorage.getItem("sex") || "male");
-
-  const today = (() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}-${String(d.getDate()).padStart(2, "0")}`;
-  })();
-
-  const [foodLog, setFoodLog] = useState(() => {
-    const saved = localStorage.getItem(`food-${today}`);
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [steps, setSteps] = useState(
-    () => parseInt(localStorage.getItem(`steps-${today}`), 10) || 0
-  );
-  const [weightLog, setWeightLog] = useState(() => {
-    const saved = localStorage.getItem("weightLog");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // screens: home | food | weight
-  const [screen, setScreen] = useState("home");
-
-  // ✏️  edit helpers used in Food & Weight pages (unchanged) ----------
-  const [customName, setCustomName] = useState("");
-  const [customCal, setCustomCal] = useState("");
-  const [customProt, setCustomProt] = useState("");
-  const [customError, setCustomError] = useState("");
-
-  const [tempFood, setTempFood] = useState({ name: "", cal: "", prot: "" });
-  const [foodEditingIndex, setFoodEditingIndex] = useState(null);
-
-  const [tempWeight, setTempWeight] = useState("");
-  const [weightEditingIndex, setWeightEditingIndex] = useState(null);
-
-  // ——— Persist to localStorage whenever things change ————————
-  useEffect(() => {
-    localStorage.setItem("height", height);
-  }, [height]);
-  useEffect(() => {
-    localStorage.setItem("weight", weight);
-  }, [weight]);
-  useEffect(() => {
-    localStorage.setItem("age", age);
-  }, [age]);
-  useEffect(() => {
-    localStorage.setItem("sex", sex);
-  }, [sex]);
-  useEffect(() => {
-    localStorage.setItem(`food-${today}`, JSON.stringify(foodLog));
-  }, [foodLog, today]);
-  useEffect(() => {
-    localStorage.setItem(`steps-${today}`, steps.toString());
-  }, [steps, today]);
-  useEffect(() => {
-    localStorage.setItem("weightLog", JSON.stringify(weightLog));
-  }, [weightLog]);
-
-  // ——— Derived daily metrics ————————————————————————————————
-  const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
-  const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
-  const proteinRounded = Math.round(proteinToday);
-  const proteinGoal = Math.round(parseFloat(weight) * 0.8 || 0);
-
-  const caloriesFromSteps = Math.round(steps * CALS_PER_STEP);
-
-  const bmr = () => {
-    const h = parseInt(height, 10),
-      w = parseFloat(weight),
-      a = parseInt(age, 10);
-    if (!h || !w || !a) return 1600;
-    const heightCm = h * 2.54,
-      weightKg = w * 0.453592;
-    return Math.round(
-      sex === "male"
-        ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
-        : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
-    );
-  };
-  const calorieGoal = bmr() - 500 + caloriesFromSteps;
-
-  /* ──────────────────────────────────────────────────────────
-     Home-screen layout (no persistent header)
-     ──────────────────────────────────────────────────────────*/
-  return (
-    <div
-      style={{
-        padding: 24,
-        paddingBottom: 80, // room for bottom-nav
-        maxWidth: 500,
-        margin: "auto",
-        fontFamily: SYSTEM_FONT,
-      }}
-    >
-      {/* HOME */}
-      {screen === "home" && (
-        <>
-          {/* Calories */}
-          <h3 style={{ fontFamily: SYSTEM_FONT }}>
-            Calories
-            <InfoButton message="Stay within your daily budget (BMR – 500 kcal). Steps add extra allowance automatically." />
-          </h3>
-          <ProgressBar
-            value={calsToday}
-            goal={calorieGoal}
-            color="#4caf50"
-            label={`${calsToday.toLocaleString()} / ${calorieGoal.toLocaleString()} kcal`}
-          />
-
-          {/* Protein */}
-          <h3 style={{ fontFamily: SYSTEM_FONT }}>
-            Protein
-            <InfoButton message="Aim for ≈ 0.8 g per lb of body-weight to preserve muscle and curb hunger." />
-          </h3>
-          <ProgressBar
-            value={proteinRounded}
-            goal={proteinGoal}
-            color="#2196f3"
-            label={`${proteinRounded} / ${proteinGoal} g`}
-          />
-
-          {/* Steps */}
-          <h3 style={{ fontFamily: SYSTEM_FONT }}>
-            Steps
-            <InfoButton message="Every step burns a little energy and raises your calorie target." />
-          </h3>
-          <ProgressBar
-            value={steps}
-            goal={10000}
-            color="#9c27b0"
-            label={`${steps.toLocaleString()} / 10,000`}
-          />
-        </>
-      )}
-
-      {/* FOOD LOGGER (unchanged) */}
-      {screen === "food" && (
-        <>
-          <FoodLogger
-            foodLog={foodLog}
-            setFoodLog={setFoodLog}
-            customName={customName}
-            setCustomName={setCustomName}
-            customCal={customCal}
-            setCustomCal={setCustomCal}
-            customProt={customProt}
-            setCustomProt={setCustomProt}
-            customError={customError}
-            setCustomError={setCustomError}
-            tempFood={tempFood}
-            setTempFood={setTempFood}
-            foodEditingIndex={foodEditingIndex}
-            setFoodEditingIndex={setFoodEditingIndex}
-          />
-        </>
-      )}
-
-      {/* WEIGHT / PROGRESS (unchanged) */}
-      {screen === "weight" && (
-        <WeightSection
-          weightLog={weightLog}
-          setWeightLog={setWeightLog}
-          tempWeight={tempWeight}
-          setTempWeight={setTempWeight}
-          weightEditingIndex={weightEditingIndex}
-          setWeightEditingIndex={setWeightEditingIndex}
-        />
-      )}
-
-      {/* ── Bottom Navigation ─────────────────────────────── */}
-      <div
-        style={{
-          position: "fixed",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          display: "flex",
-          background: "#fff",
-          borderTop: "1px solid #ccc",
-          height: 60,
-          boxShadow: "0 -1px 5px rgba(0,0,0,0.1)",
-          fontFamily: SYSTEM_FONT,
-        }}
-      >
-        <button style={navBtnStyle(screen === "home")} onClick={() => setScreen("home")}>
-          🏠 Home
-        </button>
-        <button style={navBtnStyle(screen === "food")} onClick={() => setScreen("food")}>
-          📋 Log
-        </button>
-        <button style={navBtnStyle(screen === "weight")} onClick={() => setScreen("weight")}>
-          📈 Progress
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── “How It Works” Carousel ──────────────────────────────────────────────
-function HowItWorks({ onFinish }) {
-  const cards = [
-    {
-      title: "Track food",
-      text: "Log calories and protein in a tap.",
-    },
-    {
-      title: "Stay −500 kcal",
-      text: "Maintain a safe daily calorie deficit.",
-    },
-    {
-      title: "Lose ~1 lb / wk",
-      text: "Consistency = steady progress.",
-    },
-    {
-      title: "Healthy basics",
-      text: "We focus on calories & protein—the key drivers of weight-loss and satiety. Healthy fats & carbs matter too, but most people meet those needs by eating normally. If you’re unsure, a quick chat with your doctor or a dietitian can help.",
-    },
-  ];
-
-  const [idx, setIdx] = React.useState(0);
-
-  const next = () => {
-    if (idx < cards.length - 1) {
-      setIdx(idx + 1);
-    } else {
-      localStorage.setItem("seenHowItWorks", "true");
-      onFinish();
-    }
-  };
-
-  return (
-    <div
-      style={{
-        padding: 24,
-        maxWidth: 400,
-        margin: "auto",
-        fontFamily: SYSTEM_FONT,
-        textAlign: "center",
-      }}
-    >
-      <h2>{cards[idx].title}</h2>
-      <p>{cards[idx].text}</p>
-
-      {/* bigger, friendlier button */}
-      <button
-        onClick={next}
-        style={{
-          marginTop: 28,
-          padding: "14px 28px",
-          fontSize: 18,
-          borderRadius: 8,
-          border: "none",
-          background: "#0070f3",
-          color: "#fff",
-          fontFamily: SYSTEM_FONT,
-          cursor: "pointer",
-        }}
-      >
-        {idx < cards.length - 1 ? "Next ➜" : "Start tracking"}
-      </button>
-    </div>
-  );
-}
-
-// ── FoodLogger ───────────────────────────────────────────────────────────
+/* ───────────── Food Logger ───────────── */
 function FoodLogger({ foodLog, setFoodLog }) {
-  const [measurementType, setMeasurementType] = useState("count");
+  const [mode, setMode] = useState("count"); // count | weight | volume
   const [unit, setUnit] = useState("Cups");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [value, setValue] = useState("");
-  const [selectedFood, setSelectedFood] = useState(null);
+  const [search, setSearch] = useState("");
+  const [amount, setAmount] = useState("");
+  const [selected, setSelected] = useState(null);
   const [error, setError] = useState("");
-
   const options =
-    measurementType === "count"
-      ? countFoods
-      : measurementType === "weight"
-      ? weightFoods
-      : volumeFoods;
+    mode === "count" ? countFoods : mode === "weight" ? weightFoods : volumeFoods;
   const filtered = options.filter((f) =>
-    f.name.toLowerCase().includes(searchTerm.toLowerCase())
+    f.name.toLowerCase().includes(search.toLowerCase())
   );
-
-  const handleAdd = () => {
-    if (!selectedFood || value === "") {
-      return setError("Select a food and enter an amount.");
-    }
-    const amt = parseFloat(value);
-    if (isNaN(amt) || amt <= 0) {
-      return setError("Enter a valid number.");
-    }
-    setError("");
+  const add = () => {
+    if (!selected || amount === "") return setError("Pick food & amount");
+    const amt = parseFloat(amount);
+    if (isNaN(amt) || amt <= 0) return setError("Enter a valid number");
     let cal = 0,
       prot = 0,
       label = "";
-
-    if (measurementType === "count") {
-      cal = selectedFood.cal * amt;
-      prot = selectedFood.prot * amt;
-      label = `${value}× ${selectedFood.name}`;
-    } else if (measurementType === "weight") {
-      cal = (selectedFood.calPer100g * amt) / 100;
-      prot = (selectedFood.protPer100g * amt) / 100;
-      label = `${value} g ${selectedFood.name}`;
+    if (mode === "count") {
+      cal = selected.cal * amt;
+      prot = selected.prot * amt;
+      label = `${amt}× ${selected.name}`;
+    } else if (mode === "weight") {
+      cal = (selected.calPer100g * amt) / 100;
+      prot = (selected.protPer100g * amt) / 100;
+      label = `${amt} g ${selected.name}`;
     } else {
       const factor = amt * volumeUnits.find((u) => u.label === unit).factor;
-      cal = selectedFood.calPerCup * factor;
-      prot = selectedFood.protPerCup * factor;
-      label = `${value} ${unit} ${selectedFood.name}`;
+      cal = selected.calPerCup * factor;
+      prot = selected.protPerCup * factor;
+      label = `${amt} ${unit} ${selected.name}`;
     }
-
-    setFoodLog((f) => [...f, { name: label, cal, prot }]);
-    setSearchTerm("");
-    setSelectedFood(null);
-    setValue("");
+    setFoodLog((l) => [...l, { name: label, cal, prot }]);
+    setSearch(""); setAmount(""); setSelected(null); setError("");
   };
-
   return (
-    <div>
-      <h4 style={{ fontFamily: SYSTEM_FONT }}>
-        Log Food{" "}
-        <InfoButton message="Log what you eat by count, weight, or volume—consistency sustains your 500 kcal daily deficit." />
+    <div style={{ fontFamily: SYSTEM_FONT }}>
+      <h4>
+        Log Food <Info msg="Choose method, amount, Add." />
       </h4>
-
-      {/* toggles */}
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-        {[
-          { key: "count", label: "Count" },
-          { key: "weight", label: "Weight (g)" },
-          { key: "volume", label: "Volume" },
-        ].map(({ key, label }) => (
+        {["count", "weight", "volume"].map((m) => (
           <button
-            key={key}
+            key={m}
             onClick={() => {
-              setMeasurementType(key);
+              setMode(m);
               setUnit("Cups");
-              setSearchTerm("");
-              setValue("");
-              setSelectedFood(null);
-              setError("");
+              setSearch("");
+              setAmount("");
+              setSelected(null);
             }}
             style={{
               flex: 1,
               padding: 8,
               border: "1px solid #ccc",
               borderRadius: 4,
-              background: measurementType === key ? "#0070f3" : "transparent",
-              color: measurementType === key ? "#fff" : "#000",
-              cursor: "pointer",
-              fontFamily: SYSTEM_FONT,
+              background: mode === m ? "#0070f3" : "transparent",
+              color: mode === m ? "#fff" : "#000",
             }}
           >
-            {label}
+            {m === "count" ? "Count" : m === "weight" ? "Weight (g)" : "Volume"}
           </button>
         ))}
       </div>
-
-      {/* volume units */}
-      {measurementType === "volume" && (
+      {mode === "volume" && (
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
           {volumeUnits.map((u) => (
             <button
@@ -460,8 +146,6 @@ function FoodLogger({ foodLog, setFoodLog }) {
                 borderRadius: 4,
                 background: unit === u.label ? "#0070f3" : "transparent",
                 color: unit === u.label ? "#fff" : "#000",
-                cursor: "pointer",
-                fontFamily: SYSTEM_FONT,
               }}
             >
               {u.label}
@@ -469,568 +153,232 @@ function FoodLogger({ foodLog, setFoodLog }) {
           ))}
         </div>
       )}
-
-      {/* search + amount + add */}
       <div style={{ display: "flex", gap: 8, marginBottom: 4 }}>
         <input
-          list="food-options"
-          placeholder="Search / select food…"
-          value={searchTerm}
+          list="foods"
+          placeholder="Food…"
+          value={search}
           onChange={(e) => {
-            setSearchTerm(e.target.value);
+            setSearch(e.target.value);
+            setSelected(options.find((o) => o.name === e.target.value) || null);
             setError("");
-            setSelectedFood(
-              options.find((o) => o.name === e.target.value) || null
-            );
           }}
-          style={{ flex: 1, padding: 6, fontFamily: SYSTEM_FONT }}
+          style={{ flex: 1, padding: 6 }}
         />
-        <datalist id="food-options">
-          {filtered.map((f, i) => (
-            <option key={i} value={f.name} />
+        <datalist id="foods">
+          {filtered.map((f) => (
+            <option key={f.name} value={f.name} />
           ))}
         </datalist>
-
         <input
-          type="text"
-          inputMode="decimal"
-          pattern="\d*\.?\d*"
-          placeholder="Amount"
-          value={value}
+          placeholder="Amt"
+          value={amount}
           onChange={(e) => {
-            if (DECIMAL_REGEX.test(e.target.value)) {
-              setValue(e.target.value);
-              setError("");
-            }
+            if (DECIMAL_REGEX.test(e.target.value)) setAmount(e.target.value);
           }}
-          style={{ width: 80, padding: 6, fontFamily: SYSTEM_FONT }}
+          style={{ width: 80, padding: 6 }}
         />
-
-        <button
-          onClick={handleAdd}
-          style={{ padding: "6px 12px", fontFamily: SYSTEM_FONT }}
-        >
-          Add
-        </button>
+        <button onClick={add}>Add</button>
       </div>
-      {error && (
-        <p style={{ color: "red", marginTop: 0, fontFamily: SYSTEM_FONT }}>
-          {error}
-        </p>
-      )}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <ul style={{ marginTop: 12 }}>
+        {foodLog.map((f, i) => (
+          <li key={i}>
+            {f.name} — {f.cal.toFixed(0)} kcal / {f.prot.toFixed(1)} g
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-// ── Main App ─────────────────────────────────────────────────────────────
-export default function App() {
-  const [showCarousel, setShowCarousel] = useState(
-    () => localStorage.getItem("seenHowItWorks") !== "true"
+/* ───────────── Weight Section ───────────── */
+function WeightSection({ weightLog, setWeightLog }) {
+  const [temp, setTemp] = useState("");
+  const add = () => {
+    const w = parseFloat(temp);
+    if (!isNaN(w))
+      setWeightLog((l) => [...l, { date: new Date().toLocaleDateString(), weight: w }]);
+    setTemp("");
+  };
+  const data = {
+    labels: weightLog.map((w) => w.date),
+    datasets: [{ label: "Weight", data: weightLog.map((w) => w.weight), tension: 0.2 }],
+  };
+  return (
+    <div style={{ fontFamily: SYSTEM_FONT }}>
+      <h3>
+        Track Weight <Info msg="Log regularly, same time of day." />
+      </h3>
+      {weightLog.length > 0 && <Line data={data} />}
+      <input
+        placeholder="Today’s weight"
+        value={temp}
+        onChange={(e) => setTemp(e.target.value)}
+        style={{ marginRight: 8 }}
+      />
+      <button onClick={add}>Log</button>
+      <ul>
+        {weightLog.map((w, i) => (
+          <li key={i}>
+            {w.date}: {w.weight} lb
+          </li>
+        ))}
+      </ul>
+    </div>
   );
+}
 
-  const today = (() => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}-${String(d.getDate()).padStart(2, "0")}`;
-  })();
-
-  // profile & logs
-  const [screen, setScreen] = useState("home");
-  const [editingProfile, setEditingProfile] = useState(
-    () => localStorage.getItem("onboardingComplete") !== "true"
-  );
-  const [sex, setSex] = useState(() => localStorage.getItem("sex") || "");
-  const [age, setAge] = useState(() => localStorage.getItem("age") || "");
-  const [height, setHeight] = useState(
-    () => localStorage.getItem("height") || ""
-  );
-  const [weight, setWeight] = useState(
-    () => localStorage.getItem("weight") || ""
-  );
-
-  const [steps, setSteps] = useState(
-    () => parseInt(localStorage.getItem(`steps-${today}`), 10) || 0
-  );
-  const [foodLog, setFoodLog] = useState(() => {
-    const saved = localStorage.getItem(`foodLog-${today}`);
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [weightLog, setWeightLog] = useState(() => {
-    const saved = localStorage.getItem("weightLog");
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // editing states
-  const [foodEditingIndex, setFoodEditingIndex] = useState(null);
-  const [tempFood, setTempFood] = useState({ name: "", cal: "", prot: "" });
-  const [weightEditingIndex, setWeightEditingIndex] = useState(null);
-  const [tempWeight, setTempWeight] = useState("");
-
-  // custom entry
-  const [customName, setCustomName] = useState("");
-  const [customCal, setCustomCal] = useState("");
-  const [customProt, setCustomProt] = useState("");
-  const [customError, setCustomError] = useState("");
-
-  // persist
-  useEffect(() => {
+/* ───────────── Onboarding & Carousel ───────────── */
+function ProfileForm({ onDone }) {
+  const [sex, setSex] = useState("");
+  const [age, setAge] = useState("");
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
+  const save = () => {
     localStorage.setItem("sex", sex);
     localStorage.setItem("age", age);
     localStorage.setItem("height", height);
     localStorage.setItem("weight", weight);
-  }, [sex, age, height, weight]);
-  useEffect(() => {
-    localStorage.setItem(`foodLog-${today}`, JSON.stringify(foodLog));
-  }, [foodLog]);
-  useEffect(() => {
-    localStorage.setItem(`steps-${today}`, steps.toString());
-  }, [steps]);
-  useEffect(() => {
-    localStorage.setItem("weightLog", JSON.stringify(weightLog));
-  }, [weightLog]);
-
-  // handlers
-  const finishOnboarding = () => {
     localStorage.setItem("onboardingComplete", "true");
-    setEditingProfile(false);
+    onDone();
   };
-  const addCustomFood = () => {
-    const cals = parseFloat(customCal);
-    const pro = parseFloat(customProt) || 0;
-    if (!customName || isNaN(cals)) {
-      return setCustomError("Enter a name and valid calories.");
-    }
-    setCustomError("");
-    setFoodLog((f) => [...f, { name: customName, cal: cals, prot: pro }]);
-    setCustomName("");
-    setCustomCal("");
-    setCustomProt("");
-  };
-  const startEditFood = (i) => {
-    setFoodEditingIndex(i);
-    setTempFood({ ...foodLog[i] });
-  };
-  const saveEditFood = (i) => {
-    setFoodLog((f) =>
-      f.map((it, idx) =>
-        idx === i
-          ? { name: tempFood.name, cal: +tempFood.cal, prot: +tempFood.prot }
-          : it
-      )
-    );
-    setFoodEditingIndex(null);
-  };
-  const cancelEditFood = () => setFoodEditingIndex(null);
-  const removeFood = (i) => setFoodLog((f) => f.filter((_, idx) => idx !== i));
+  return (
+    <div style={{ padding: 24, fontFamily: SYSTEM_FONT }}>
+      <h2>Welcome to 500</h2>
+      <label>
+        Sex&nbsp;
+        <select value={sex} onChange={(e) => setSex(e.target.value)}>
+          <option></option>
+          <option>male</option>
+          <option>female</option>
+        </select>
+      </label>
+      <br />
+      <label>
+        Age&nbsp;
+        <input value={age} onChange={(e) => setAge(e.target.value)} />
+      </label>
+      <br />
+      <label>
+        Height&nbsp;(in)&nbsp;
+        <input value={height} onChange={(e) => setHeight(e.target.value)} />
+      </label>
+      <br />
+      <label>
+        Weight&nbsp;(lbs)&nbsp;
+        <input value={weight} onChange={(e) => setWeight(e.target.value)} />
+      </label>
+      <br />
+      <button onClick={save} style={{ marginTop: 12 }}>
+        Save & Start
+      </button>
+    </div>
+  );
+}
+function HowItWorks({ onFinish }) {
+  const cards = [
+    { t: "Track food", s: "Log calories & protein fast." },
+    { t: "Stay −500", s: "Eat ~500 kcal below maintenance." },
+    { t: "Lose ≈1 lb/wk", s: "Consistency beats perfection." },
+  ];
+  const [i, setI] = useState(0);
+  return (
+    <div style={{ padding: 24, textAlign: "center", fontFamily: SYSTEM_FONT }}>
+      <h2>{cards[i].t}</h2>
+      <p>{cards[i].s}</p>
+      <button
+        onClick={() => {
+          if (i < cards.length - 1) setI(i + 1);
+          else {
+            localStorage.setItem("seenHowItWorks", "true");
+            onFinish();
+          }
+        }}
+      >
+        {i < cards.length - 1 ? "Next ➜" : "Start"}
+      </button>
+    </div>
+  );
+}
 
-  const addWeightLog = () => {
-    const w = parseFloat(tempWeight);
-    if (!isNaN(w)) {
-      setWeightLog((prev) => [...prev, { date: today, weight: w }]);
-      setTempWeight("");
-    }
+/* ───────────── Main App ───────────── */
+export default function App() {
+  const todayKey = () => {
+    const d = new Date();
+    return `foodLog-${d.toISOString().slice(0, 10)}`;
   };
-  const startEditWeight = (i) => {
-    setWeightEditingIndex(i);
-    setTempWeight(weightLog[i].weight.toString());
-  };
-  const saveEditWeight = (i) => {
-    setWeightLog((w) =>
-      w.map((e, idx) =>
-        idx === i ? { ...e, weight: parseFloat(tempWeight) } : e
-      )
-    );
-    setWeightEditingIndex(null);
-  };
-  const cancelEditWeight = () => setWeightEditingIndex(null);
-  const deleteWeight = (i) => setWeightLog((w) => w.filter((_, idx) => idx !== i));
+  const [foodLog, setFoodLog] = useState(() =>
+    JSON.parse(localStorage.getItem(todayKey()) || "[]")
+  );
+  const [steps, setSteps] = useState(() =>
+    parseInt(localStorage.getItem("steps") || "0", 10)
+  );
+  const [weightLog, setWeightLog] = useState(() =>
+    JSON.parse(localStorage.getItem("weightLog") || "[]")
+  );
+  useEffect(() => localStorage.setItem(todayKey(), JSON.stringify(foodLog)), [foodLog]);
+  useEffect(() => localStorage.setItem("steps", steps.toString()), [steps]);
+  useEffect(() => localStorage.setItem("weightLog", JSON.stringify(weightLog)), [weightLog]);
 
-  const resetDay = () => {
-    setFoodLog([]);
-    setSteps(0);
-    localStorage.removeItem(`foodLog-${today}`);
-    localStorage.removeItem(`steps-${today}`);
-  };
+  const [screen, setScreen] = useState("home");
+  const [showCarousel, setShowCarousel] = useState(
+    localStorage.getItem("seenHowItWorks") !== "true"
+  );
+  const [needProfile, setNeedProfile] = useState(
+    localStorage.getItem("onboardingComplete") !== "true"
+  );
 
-  // first-run carousel
-  if (showCarousel) {
-    return <HowItWorks onFinish={() => setShowCarousel(false)} />;
-  }
-
-  // onboarding
-  if (editingProfile) {
-    return (
-      <div style={{ padding: 24, fontFamily: SYSTEM_FONT }}>
-        <h2>The 500 Plan</h2>
-        <p>Track food. Hit your goals. Lose a pound a week.</p>
-        <label>
-          Sex:{" "}
-          <select
-            value={sex}
-            onChange={(e) => setSex(e.target.value)}
-            style={{ fontFamily: SYSTEM_FONT }}
-          >
-            <option>male</option>
-            <option>female</option>
-          </select>
-        </label>
-        <br />
-        <label>
-          Age:{" "}
-          <input
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            style={{ fontFamily: SYSTEM_FONT }}
-          />
-        </label>
-        <br />
-        <label>
-          Height (in):{" "}
-          <input
-            value={height}
-            onChange={(e) => setHeight(e.target.value)}
-            style={{ fontFamily: SYSTEM_FONT }}
-          />
-        </label>
-        <br />
-        <label>
-          Weight (lbs):{" "}
-          <input
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-            style={{ fontFamily: SYSTEM_FONT }}
-          />
-        </label>
-        <br />
-        <button onClick={finishOnboarding} style={{ fontFamily: SYSTEM_FONT }}>
-          Save & Start
-        </button>
-      </div>
-    );
-  }
-
-  // main UI
-  const calsToday = foodLog.reduce((sum, f) => sum + f.cal, 0);
-  const proteinToday = foodLog.reduce((sum, f) => sum + f.prot, 0);
-  // round for display only:
-  const proteinRounded = Math.round(proteinToday);
-  const proteinGoal = Math.round(parseFloat(weight) * 0.8 || 0);
-  const caloriesFromSteps = Math.round(steps * 0.04);
+  /* derived */
+  const weight = parseFloat(localStorage.getItem("weight") || "0");
+  const height = parseInt(localStorage.getItem("height") || "0", 10);
+  const age = parseInt(localStorage.getItem("age") || "0", 10);
+  const sex = localStorage.getItem("sex") || "male";
+  const calsToday = foodLog.reduce((s, f) => s + f.cal, 0);
+  const proteinToday = Math.round(foodLog.reduce((s, f) => s + f.prot, 0));
+  const proteinGoal = Math.round(weight * 0.8 || 0);
   const bmr = () => {
-    const h = parseInt(height, 10),
-      w = parseFloat(weight),
-      a = parseInt(age, 10);
-    if (!h || !w || !a) return 1600;
-    const heightCm = h * 2.54,
-      weightKg = w * 0.453592;
+    if (!height || !weight || !age) return 1600;
+    const cm = height * 2.54,
+      kg = weight * 0.453592;
     return Math.round(
       sex === "male"
-        ? 10 * weightKg + 6.25 * heightCm - 5 * a + 5
-        : 10 * weightKg + 6.25 * heightCm - 5 * a - 161
+        ? 10 * kg + 6.25 * cm - 5 * age + 5
+        : 10 * kg + 6.25 * cm - 5 * age - 161
     );
   };
-  const calorieGoal = bmr() - 500 + caloriesFromSteps;
+  const calorieGoal = bmr() - 500 + steps * CALS_PER_STEP;
+
+  /* gates */
+  if (showCarousel) return <HowItWorks onFinish={() => setShowCarousel(false)} />;
+  if (needProfile) return <ProfileForm onDone={() => setNeedProfile(false)} />;
 
   return (
-    <div
-      style={{
-        padding: 24,
-        paddingBottom: 80,
-        maxWidth: 500,
-        margin: "auto",
-        fontFamily: SYSTEM_FONT,
-      }}
-    >
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between" }}>
-        <h2>The 500 Plan</h2>
-        <button
-          onClick={() => {
-            localStorage.removeItem("onboardingComplete");
-            setEditingProfile(true);
-          }}
-          style={{ fontFamily: SYSTEM_FONT }}
-        >
-          ⚙️
-        </button>
-      </div>
-
-      {/* Home */}
+    <div style={{ padding: 24, paddingBottom: 80, maxWidth: 500, margin: "auto" }}>
       {screen === "home" && (
         <>
-          <h3 style={{ fontFamily: SYSTEM_FONT }}>
-            Calories{" "}
-            <InfoButton message="Your body burns calories even at rest (BMR). Eating ~500 kcal less than that each day sheds about 1 lb a week." />
+          <h3>
+            Calories <Info msg="Stay within daily budget. Steps raise it." />
           </h3>
-          <CalorieBar consumed={calsToday} goal={calorieGoal} />
-
-          <h3 style={{ fontFamily: SYSTEM_FONT }}>
-            Protein{" "}
-            <InfoButton message="Hit your daily protein to keep muscle and stay full while cutting calories." />
-          </h3>
-          <ProgressBar
-            value={proteinRounded}
-            goal={proteinGoal}
+          <Bar
+            v={calsToday}
+            g={calorieGoal}
             color="#4caf50"
-            label={`${proteinRounded} / ${proteinGoal} g`}
+            label={`${calsToday.toLocaleString()} / ${Math.round(calorieGoal).toLocaleString()} kcal`}
           />
-
-          <h3 style={{ fontFamily: SYSTEM_FONT }}>
-            Steps{" "}
-            <InfoButton message="More steps = more burn. ~10 k steps add roughly 300-500 kcal to your daily budget." />
+          <h3>
+            Protein <Info msg="Aim ≈0.8 g per lb body-weight." />
           </h3>
-          <ProgressBar value={steps} goal={10000} color="#ff9800" />
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            placeholder="0"
-            value={steps === 0 ? "" : steps.toString()}
-            onChange={(e) => {
-              const raw = e.target.value;
-              if (/^\d*$/.test(raw)) {
-                setSteps(raw === "" ? 0 : parseInt(raw, 10));
-              }
-            }}
-            style={{ width: 80, fontFamily: SYSTEM_FONT }}
-          />
-          <p style={{ fontFamily: SYSTEM_FONT }}>
-            +{caloriesFromSteps} cal from steps
-          </p>
-          <button
-            onClick={() => {
-              if (window.confirm("Are you sure? This cannot be undone.")) {
-                resetDay();
-              }
-            }}
-            style={{
-              marginTop: 10,
-              background: "#000",
-              color: "#fff",
-              padding: 10,
-              borderRadius: 5,
-              fontFamily: SYSTEM_FONT,
-            }}
-          >
-            🔄 Reset Day
-          </button>
+          <Bar v={proteinToday} g={proteinGoal} color="#2196f3" label={`${proteinToday} / ${proteinGoal} g`} />
+          <h3>
+            Steps <Info msg="~0.04 kcal burned per step." />
+          </h3>
+          <Bar v={steps} g={10000} color="#9c27b0" label={`${steps.toLocaleString()} / 10 000`} />
         </>
       )}
+      {screen === "food" && <FoodLogger foodLog={foodLog} setFoodLog={setFoodLog} />}
+      {screen === "weight" && <WeightSection weightLog={weightLog} setWeightLog={setWeightLog} />}
 
-      {/* Food */}
-      {screen === "food" && (
-        <>
-          <FoodLogger foodLog={foodLog} setFoodLog={setFoodLog} />
-
-          <h4 style={{ fontFamily: SYSTEM_FONT }}>Custom Entry</h4>
-          <input
-            placeholder="Name"
-            value={customName}
-            onChange={(e) => {
-              setCustomName(e.target.value);
-              setCustomError("");
-            }}
-            style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
-          />
-          <input
-            placeholder="Calories"
-            type="text"
-            inputMode="decimal"
-            pattern="\d*\.?\d*"
-            value={customCal}
-            onChange={(e) => {
-              if (DECIMAL_REGEX.test(e.target.value)) {
-                setCustomCal(e.target.value);
-                setCustomError("");
-              }
-            }}
-            style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
-          />
-          <input
-            placeholder="Protein"
-            type="text"
-            inputMode="decimal"
-            pattern="\d*\.?\d*"
-            value={customProt}
-            onChange={(e) => {
-              if (DECIMAL_REGEX.test(e.target.value)) {
-                setCustomProt(e.target.value);
-                setCustomError("");
-              }
-            }}
-            style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
-          />
-          <button onClick={addCustomFood} style={{ fontFamily: SYSTEM_FONT }}>
-            Add
-          </button>
-          {customError && (
-            <p style={{ color: "red", marginTop: 4, fontFamily: SYSTEM_FONT }}>
-              {customError}
-            </p>
-          )}
-
-          <h4 style={{ fontFamily: SYSTEM_FONT }}>Logged Foods</h4>
-          <ul>
-            {foodLog.map((it, i) => (
-              <li
-                key={i}
-                style={{ marginBottom: 6, fontFamily: SYSTEM_FONT }}
-              >
-                {foodEditingIndex === i ? (
-                  <>
-                    <input
-                      value={tempFood.name}
-                      onChange={(e) =>
-                        setTempFood((t) => ({ ...t, name: e.target.value }))
-                      }
-                      style={{ marginRight: 4, fontFamily: SYSTEM_FONT }}
-                    />
-                    <input
-                      value={tempFood.cal}
-                      type="number"
-                      onChange={(e) =>
-                        setTempFood((t) => ({ ...t, cal: e.target.value }))
-                      }
-                      style={{
-                        width: 60,
-                        marginRight: 4,
-                        fontFamily: SYSTEM_FONT,
-                      }}
-                    />
-                    <input
-                      value={tempFood.prot}
-                      type="number"
-                      onChange={(e) =>
-                        setTempFood((t) => ({ ...t, prot: e.target.value }))
-                      }
-                      style={{
-                        width: 60,
-                        marginRight: 4,
-                        fontFamily: SYSTEM_FONT,
-                      }}
-                    />
-                    <button
-                      onClick={() => saveEditFood(i)}
-                      style={{ fontFamily: SYSTEM_FONT }}
-                    >
-                      Save
-                    </button>{" "}
-                    <button
-                      onClick={cancelEditFood}
-                      style={{ fontFamily: SYSTEM_FONT }}
-                    >
-                      Cancel
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {it.name} — {it.cal.toFixed(1)} kcal /{" "}
-                    {it.prot.toFixed(1)}g protein{" "}
-                    <button
-                      onClick={() => startEditFood(i)}
-                      style={{ fontFamily: SYSTEM_FONT }}
-                    >
-                      ✏️
-                    </button>{" "}
-                    <button
-                      onClick={() => removeFood(i)}
-                      style={{ fontFamily: SYSTEM_FONT }}
-                    >
-                      ✖️
-                    </button>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-
-      {/* Weight */}
-      {screen === "weight" && (
-        <>
-          <h3 style={{ fontFamily: SYSTEM_FONT }}>Track Weight</h3>
-          {weightEditingIndex !== null ? (
-            <>
-              <input
-                value={tempWeight}
-                onChange={(e) => setTempWeight(e.target.value)}
-                style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
-              />
-              <button
-                onClick={() => saveEditWeight(weightEditingIndex)}
-                style={{ fontFamily: SYSTEM_FONT }}
-              >
-                Save
-              </button>{" "}
-              <button
-                onClick={cancelEditWeight}
-                style={{ fontFamily: SYSTEM_FONT }}
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <>
-              <input
-                placeholder="Today's weight"
-                value={tempWeight}
-                onChange={(e) => setTempWeight(e.target.value)}
-                style={{ marginRight: 8, fontFamily: SYSTEM_FONT }}
-              />
-              <button
-                onClick={addWeightLog}
-                style={{ fontFamily: SYSTEM_FONT }}
-              >
-                Log
-              </button>
-            </>
-          )}
-          <Line
-            data={{
-              labels: weightLog.map((w) => w.date),
-              datasets: [
-                {
-                  label: "Weight (lbs)",
-                  data: weightLog.map((w) => w.weight),
-                  fill: false,
-                  tension: 0.1,
-                },
-              ],
-            }}
-          />
-          <ul>
-            {weightLog.map((w, i) => (
-              <li
-                key={i}
-                style={{ marginBottom: 6, fontFamily: SYSTEM_FONT }}
-              >
-                {weightEditingIndex === i ? null : (
-                  <>
-                    {w.date}: {w.weight} lb{" "}
-                    <button
-                      onClick={() => startEditWeight(i)}
-                      style={{ fontFamily: SYSTEM_FONT }}
-                    >
-                      ✏️
-                    </button>{" "}
-                    <button
-                      onClick={() => deleteWeight(i)}
-                      style={{ fontFamily: SYSTEM_FONT }}
-                    >
-                      ✖️
-                    </button>
-                  </>
-                )}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-
-      {/* Bottom nav */}
       <div
         style={{
           position: "fixed",
@@ -1038,22 +386,20 @@ export default function App() {
           left: 0,
           right: 0,
           display: "flex",
-          justifyContent: "space-around",
           background: "#fff",
           borderTop: "1px solid #ccc",
           height: 60,
           boxShadow: "0 -1px 5px rgba(0,0,0,0.1)",
-          fontFamily: SYSTEM_FONT,
         }}
       >
-        <button style={navBtnStyle(screen === "home")} onClick={() => setScreen("home")}>
+        <button style={navBtn(screen === "home")} onClick={() => setScreen("home")}>
           🏠 Home
         </button>
-        <button style={navBtnStyle(screen === "food")} onClick={() => setScreen("food")}>
-          🍽️ Food
+        <button style={navBtn(screen === "food")} onClick={() => setScreen("food")}>
+          📋 Log
         </button>
-        <button style={navBtnStyle(screen === "weight")} onClick={() => setScreen("weight")}>
-          ⚖️ Weight
+        <button style={navBtn(screen === "weight")} onClick={() => setScreen("weight")}>
+          📈 Progress
         </button>
       </div>
     </div>
